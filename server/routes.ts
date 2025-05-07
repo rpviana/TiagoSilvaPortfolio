@@ -1,22 +1,50 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertMessageSchema } from "@shared/schema";
+import { insertMessageSchema, insertLanguageSchema, insertEventTranslationSchema } from "@shared/schema";
 import nodemailer from 'nodemailer';
 import path from 'path';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API routes
+
+  // Language routes
+  app.get('/api/languages', async (req: Request, res: Response) => {
+    try {
+      const languages = await storage.getLanguages();
+      res.json(languages);
+    } catch (error) {
+      console.error('Error fetching languages:', error);
+      res.status(500).json({ message: 'Failed to fetch languages' });
+    }
+  });
+
+  app.post('/api/languages', async (req: Request, res: Response) => {
+    try {
+      const languageData = insertLanguageSchema.parse(req.body);
+      const language = await storage.createLanguage(languageData);
+      res.status(201).json(language);
+    } catch (error: any) {
+      console.error('Error creating language:', error);
+      res.status(400).json({ 
+        message: 'Invalid language data', 
+        error: error.message 
+      });
+    }
+  });
+
+  // Event routes
   app.get('/api/events', async (req: Request, res: Response) => {
     try {
       const isPastStr = req.query.isPast as string | undefined;
+      const languageCode = req.query.lang as string | undefined;
       let isPast: boolean | undefined = undefined;
       
       if (isPastStr !== undefined) {
         isPast = isPastStr === 'true';
       }
       
-      const events = await storage.getEvents(isPast);
+      const events = await storage.getEvents(isPast, languageCode);
       
       // Sort upcoming events by date (ascending)
       if (isPast === false) {
@@ -34,10 +62,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.get('/api/events/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const languageCode = req.query.lang as string | undefined;
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid event ID' });
+      }
+      
+      const event = await storage.getEvent(id, languageCode);
+      
+      if (!event) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+      
+      res.json(event);
+    } catch (error) {
+      console.error('Error fetching event:', error);
+      res.status(500).json({ message: 'Failed to fetch event' });
+    }
+  });
+  
+  // Repertoire category routes
+  app.get('/api/repertoire/categories', async (req: Request, res: Response) => {
+    try {
+      const languageCode = req.query.lang as string | undefined;
+      const categories = await storage.getRepertoireCategories(languageCode);
+      res.json(categories);
+    } catch (error) {
+      console.error('Error fetching repertoire categories:', error);
+      res.status(500).json({ message: 'Failed to fetch repertoire categories' });
+    }
+  });
+  
+  // Repertoire routes
   app.get('/api/repertoire', async (req: Request, res: Response) => {
     try {
-      const category = req.query.category as string | undefined;
-      const repertoire = await storage.getRepertoire(category);
+      const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
+      const languageCode = req.query.lang as string | undefined;
+      
+      const repertoire = await storage.getRepertoire(categoryId, languageCode);
       res.json(repertoire);
     } catch (error) {
       console.error('Error fetching repertoire:', error);
@@ -45,6 +110,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.get('/api/repertoire/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const languageCode = req.query.lang as string | undefined;
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid repertoire ID' });
+      }
+      
+      const item = await storage.getRepertoireItem(id, languageCode);
+      
+      if (!item) {
+        return res.status(404).json({ message: 'Repertoire item not found' });
+      }
+      
+      res.json(item);
+    } catch (error) {
+      console.error('Error fetching repertoire item:', error);
+      res.status(500).json({ message: 'Failed to fetch repertoire item' });
+    }
+  });
+  
+  // Contact form route
   app.post('/api/contact', async (req: Request, res: Response) => {
     try {
       const messageData = insertMessageSchema.parse(req.body);

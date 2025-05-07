@@ -3,11 +3,33 @@ import {
   Message, InsertMessage, 
   Event, InsertEvent, 
   Repertoire, InsertRepertoire,
-  users, messages, events, repertoire
+  Language, InsertLanguage,
+  EventTranslation, InsertEventTranslation,
+  RepertoireCategory, InsertRepertoireCategory,
+  RepertoireCategoryTranslation, InsertRepertoireCategoryTranslation,
+  RepertoireTranslation, InsertRepertoireTranslation,
+  users, messages, events, repertoire,
+  languages, eventTranslations, 
+  repertoireCategories, repertoireCategoryTranslations, 
+  repertoireTranslations
 } from "@shared/schema";
 
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, or, desc, sql, asc, isNull } from "drizzle-orm";
+
+// Tipos estendidos com traduções
+export interface EventWithTranslations extends Event {
+  translations: EventTranslation[];
+}
+
+export interface RepertoireCategoryWithTranslations extends RepertoireCategory {
+  translations: RepertoireCategoryTranslation[];
+}
+
+export interface RepertoireWithTranslations extends Repertoire {
+  translations: RepertoireTranslation[];
+  category?: RepertoireCategoryWithTranslations;
+}
 
 // Storage interface
 export interface IStorage {
@@ -16,316 +38,34 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
+  // Language methods
+  getLanguages(): Promise<Language[]>;
+  getLanguage(code: string): Promise<Language | undefined>;
+  createLanguage(language: InsertLanguage): Promise<Language>;
+  
   // Message methods
   createMessage(message: InsertMessage): Promise<Message>;
   getMessages(): Promise<Message[]>;
   
   // Event methods
-  getEvents(isPast?: boolean): Promise<Event[]>;
-  createEvent(event: InsertEvent): Promise<Event>;
+  getEvents(isPast?: boolean, languageCode?: string): Promise<EventWithTranslations[]>;
+  getEvent(id: number, languageCode?: string): Promise<EventWithTranslations | undefined>;
+  createEvent(event: InsertEvent, translations: InsertEventTranslation[]): Promise<EventWithTranslations>;
+  
+  // Repertoire category methods
+  getRepertoireCategories(languageCode?: string): Promise<RepertoireCategoryWithTranslations[]>;
+  getRepertoireCategory(id: number, languageCode?: string): Promise<RepertoireCategoryWithTranslations | undefined>;
+  createRepertoireCategory(category: InsertRepertoireCategory, translations: InsertRepertoireCategoryTranslation[]): Promise<RepertoireCategoryWithTranslations>;
   
   // Repertoire methods
-  getRepertoire(category?: string): Promise<Repertoire[]>;
-  createRepertoire(repertoire: InsertRepertoire): Promise<Repertoire>;
-}
-
-// Classe de armazenamento em memória (mantida como referência)
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private messages: Map<number, Message>;
-  private events: Map<number, Event>;
-  private repertoireItems: Map<number, Repertoire>;
-  
-  private userId: number;
-  private messageId: number;
-  private eventId: number;
-  private repertoireId: number;
-  
-  constructor() {
-    this.users = new Map<number, User>();
-    this.messages = new Map<number, Message>();
-    this.events = new Map<number, Event>();
-    this.repertoireItems = new Map<number, Repertoire>();
-    
-    this.userId = 1;
-    this.messageId = 1;
-    this.eventId = 1;
-    this.repertoireId = 1;
-    
-    // Initialize with sample data
-    this.initializeData();
-  }
-  
-  async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-  
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    for (const user of this.users.values()) {
-      if (user.username === username) {
-        return user;
-      }
-    }
-    
-    return undefined;
-  }
-  
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
-  }
-  
-  async createMessage(message: InsertMessage): Promise<Message> {
-    const id = this.messageId++;
-    const createdAt = new Date();
-    
-    const newMessage: Message = {
-      ...message,
-      id,
-      createdAt
-    };
-    
-    this.messages.set(id, newMessage);
-    return newMessage;
-  }
-  
-  async getMessages(): Promise<Message[]> {
-    return Array.from(this.messages.values());
-  }
-  
-  async getEvents(isPast?: boolean): Promise<Event[]> {
-    const events = Array.from(this.events.values());
-    
-    if (isPast !== undefined) {
-      return events.filter(event => event.isPast === isPast);
-    }
-    
-    return events;
-  }
-  
-  async createEvent(event: InsertEvent): Promise<Event> {
-    const id = this.eventId++;
-    // Ensure properties have default values if undefined
-    const newEvent: Event = { 
-      ...event, 
-      id, 
-      isPast: event.isPast === undefined ? false : event.isPast,
-      bookingLink: event.bookingLink === undefined ? null : event.bookingLink,
-      programLink: event.programLink === undefined ? null : event.programLink
-    };
-    this.events.set(id, newEvent);
-    return newEvent;
-  }
-  
-  // Repertoire methods
-  async getRepertoire(category?: string): Promise<Repertoire[]> {
-    const repertoire = Array.from(this.repertoireItems.values());
-    
-    if (category) {
-      return repertoire.filter(item => item.category === category);
-    }
-    
-    return repertoire;
-  }
-  
-  async createRepertoire(repertoire: InsertRepertoire): Promise<Repertoire> {
-    const id = this.repertoireId++;
-    const newRepertoire: Repertoire = { ...repertoire, id };
-    this.repertoireItems.set(id, newRepertoire);
-    return newRepertoire;
-  }
-  
-  // Initialize with sample data
-  private initializeData() {
-    // Create upcoming events
-    this.createEvent({
-      title: "Bach & Contemporary Reflections",
-      date: new Date("2023-10-15T19:30:00"),
-      time: "7:30 PM",
-      venue: "Wigmore Hall, London, UK",
-      description: "A solo recital exploring J.S. Bach's Partita No. 2 alongside contemporary works inspired by Bach's musical language, featuring compositions by Sofia Gubaidulina and Thomas Adès.",
-      isPast: false,
-      bookingLink: "#",
-      programLink: "#"
-    });
-    
-    this.createEvent({
-      title: "Brett Dean's \"Eclipse\" with 97 Ensemble",
-      date: new Date("2023-11-03T20:00:00"),
-      time: "8:00 PM",
-      venue: "Kings Place, London, UK",
-      description: "Performing Brett Dean's String Quartet No. 1 \"Eclipse\" alongside works by Beethoven and Shostakovich in a program exploring musical dialogues across centuries.",
-      isPast: false,
-      bookingLink: "#",
-      programLink: "#"
-    });
-    
-    this.createEvent({
-      title: "Winter Solstice: Music and Light",
-      date: new Date("2023-12-22T19:00:00"),
-      time: "7:00 PM",
-      venue: "St. Martin-in-the-Fields, London, UK",
-      description: "A special collaborative performance with Constelação 15, combining violin music with visual projections and lighting design to create an immersive solstice celebration.",
-      isPast: false,
-      bookingLink: "#",
-      programLink: "#"
-    });
-    
-    // Create past events
-    this.createEvent({
-      title: "Tiago Soares Silva: Solo Recital",
-      date: new Date("2023-06-10T19:00:00"),
-      time: "7:00 PM",
-      venue: "Royal Academy of Music, London, UK",
-      description: "A solo program featuring works by Bach, Ysaÿe, and contemporary composers.",
-      isPast: true,
-      bookingLink: "#",
-      programLink: "#"
-    });
-    
-    this.createEvent({
-      title: "Chamber Music Festival",
-      date: new Date("2023-04-22T18:30:00"),
-      time: "6:30 PM",
-      venue: "Barbican Centre, London, UK",
-      description: "Performing in various chamber ensembles, including works by Beethoven, Brahms, and Debussy.",
-      isPast: true,
-      bookingLink: "#",
-      programLink: "#"
-    });
-    
-    // Add repertoire items
-    
-    // Solo Performances
-    this.createRepertoire({
-      composer: "J.S. Bach",
-      title: "Sonatas and Partitas for Solo Violin",
-      category: "Solo Performances"
-    });
-    
-    this.createRepertoire({
-      composer: "Niccolò Paganini",
-      title: "24 Caprices, Op. 1",
-      category: "Solo Performances"
-    });
-    
-    this.createRepertoire({
-      composer: "Eugene Ysaÿe",
-      title: "Six Sonatas for Solo Violin, Op. 27",
-      category: "Solo Performances"
-    });
-    
-    this.createRepertoire({
-      composer: "Heinrich Ignaz Franz Biber",
-      title: "Mystery (Rosary) Sonatas",
-      category: "Solo Performances"
-    });
-    
-    this.createRepertoire({
-      composer: "Béla Bartók",
-      title: "Sonata for Solo Violin, Sz. 117",
-      category: "Solo Performances"
-    });
-    
-    // Violin Concertos
-    this.createRepertoire({
-      composer: "Ludwig van Beethoven",
-      title: "Violin Concerto in D major, Op. 61",
-      category: "Violin Concertos"
-    });
-    
-    this.createRepertoire({
-      composer: "Johannes Brahms",
-      title: "Violin Concerto in D major, Op. 77",
-      category: "Violin Concertos"
-    });
-    
-    this.createRepertoire({
-      composer: "Felix Mendelssohn",
-      title: "Violin Concerto in E minor, Op. 64",
-      category: "Violin Concertos"
-    });
-    
-    this.createRepertoire({
-      composer: "Sergei Prokofiev",
-      title: "Violin Concertos No. 1 & 2",
-      category: "Violin Concertos"
-    });
-    
-    this.createRepertoire({
-      composer: "Philip Glass",
-      title: "Violin Concerto No. 1",
-      category: "Violin Concertos"
-    });
-    
-    // Chamber Music
-    this.createRepertoire({
-      composer: "Ludwig van Beethoven",
-      title: "Complete String Quartets",
-      category: "Chamber Music"
-    });
-    
-    this.createRepertoire({
-      composer: "Maurice Ravel",
-      title: "String Quartet in F major",
-      category: "Chamber Music"
-    });
-    
-    this.createRepertoire({
-      composer: "Brett Dean",
-      title: "Eclipse (String Quartet No. 1)",
-      category: "Chamber Music"
-    });
-    
-    this.createRepertoire({
-      composer: "Dmitri Shostakovich",
-      title: "String Quartets No. 8 & 15",
-      category: "Chamber Music"
-    });
-    
-    this.createRepertoire({
-      composer: "Justin Connolly",
-      title: "Music for Strings",
-      category: "Chamber Music"
-    });
-    
-    // Contemporary Works
-    this.createRepertoire({
-      composer: "Kaija Saariaho",
-      title: "Nocturne for Solo Violin",
-      category: "Contemporary Works"
-    });
-    
-    this.createRepertoire({
-      composer: "John Adams",
-      title: "Road Movies for Violin and Piano",
-      category: "Contemporary Works"
-    });
-    
-    this.createRepertoire({
-      composer: "Thomas Adès",
-      title: "Arcadiana (String Quartet)",
-      category: "Contemporary Works"
-    });
-    
-    this.createRepertoire({
-      composer: "Sofia Gubaidulina",
-      title: "Offertorium (Violin Concerto)",
-      category: "Contemporary Works"
-    });
-    
-    this.createRepertoire({
-      composer: "Luciano Berio",
-      title: "Sequenza VIII for Violin",
-      category: "Contemporary Works"
-    });
-  }
+  getRepertoire(categoryId?: number, languageCode?: string): Promise<RepertoireWithTranslations[]>;
+  getRepertoireItem(id: number, languageCode?: string): Promise<RepertoireWithTranslations | undefined>;
+  createRepertoire(item: InsertRepertoire, translations: InsertRepertoireTranslation[]): Promise<RepertoireWithTranslations>;
 }
 
 // Implementação do armazenamento usando banco de dados
 export class DatabaseStorage implements IStorage {
+  // User methods
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
@@ -344,6 +84,25 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
   
+  // Language methods
+  async getLanguages(): Promise<Language[]> {
+    return await db.select().from(languages);
+  }
+  
+  async getLanguage(code: string): Promise<Language | undefined> {
+    const [language] = await db.select().from(languages).where(eq(languages.code, code));
+    return language || undefined;
+  }
+  
+  async createLanguage(language: InsertLanguage): Promise<Language> {
+    const [newLanguage] = await db
+      .insert(languages)
+      .values(language)
+      .returning();
+    return newLanguage;
+  }
+  
+  // Message methods
   async createMessage(message: InsertMessage): Promise<Message> {
     const [newMessage] = await db
       .insert(messages)
@@ -356,48 +115,296 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(messages);
   }
   
-  async getEvents(isPast?: boolean): Promise<Event[]> {
-    const query = db.select().from(events);
+  // Event methods
+  async getEvents(isPast?: boolean, languageCode?: string): Promise<EventWithTranslations[]> {
+    const eventsData = await db.select().from(events);
     
     if (isPast !== undefined) {
-      return await query.where(eq(events.isPast, isPast));
+      const filteredEvents = eventsData.filter(event => event.isPast === isPast);
+      return await this.addTranslationsToEvents(filteredEvents, languageCode);
     }
     
-    return await query;
+    return await this.addTranslationsToEvents(eventsData, languageCode);
   }
   
-  async createEvent(event: InsertEvent): Promise<Event> {
-    // Ensure properties have default values if undefined
-    const insertData = { 
-      ...event, 
-      isPast: event.isPast === undefined ? false : event.isPast,
-      bookingLink: event.bookingLink === undefined ? null : event.bookingLink,
-      programLink: event.programLink === undefined ? null : event.programLink
-    };
+  async getEvent(id: number, languageCode?: string): Promise<EventWithTranslations | undefined> {
+    const [event] = await db.select().from(events).where(eq(events.id, id));
     
+    if (!event) {
+      return undefined;
+    }
+    
+    const eventsWithTranslations = await this.addTranslationsToEvents([event], languageCode);
+    return eventsWithTranslations[0];
+  }
+  
+  private async addTranslationsToEvents(events: Event[], languageCode?: string): Promise<EventWithTranslations[]> {
+    if (events.length === 0) {
+      return [];
+    }
+    
+    const eventIds = events.map(event => event.id);
+    let translations;
+    
+    if (languageCode) {
+      translations = await db.select()
+        .from(eventTranslations)
+        .where(and(
+          sql`${eventTranslations.eventId} IN (${eventIds.join(',')})`,
+          eq(eventTranslations.languageCode, languageCode)
+        ));
+    } else {
+      translations = await db.select()
+        .from(eventTranslations)
+        .where(sql`${eventTranslations.eventId} IN (${eventIds.join(',')})`);
+    }
+    
+    // Agrupar traduções por eventId
+    const translationsByEventId = translations.reduce((acc, translation) => {
+      if (!acc[translation.eventId]) {
+        acc[translation.eventId] = [];
+      }
+      acc[translation.eventId].push(translation);
+      return acc;
+    }, {} as Record<number, EventTranslation[]>);
+    
+    // Adicionar traduções a cada evento
+    return events.map(event => {
+      return {
+        ...event,
+        translations: translationsByEventId[event.id] || []
+      };
+    });
+  }
+  
+  async createEvent(event: InsertEvent, translations: InsertEventTranslation[]): Promise<EventWithTranslations> {
+    // Insere o evento
     const [newEvent] = await db
       .insert(events)
-      .values(insertData)
+      .values(event)
       .returning();
-    return newEvent;
+    
+    // Insere as traduções
+    const eventTranslationsToInsert = translations.map(translation => ({
+      ...translation,
+      eventId: newEvent.id
+    }));
+    
+    const insertedTranslations = await db
+      .insert(eventTranslations)
+      .values(eventTranslationsToInsert)
+      .returning();
+    
+    // Retorna o evento com suas traduções
+    return {
+      ...newEvent,
+      translations: insertedTranslations
+    };
   }
   
-  async getRepertoire(category?: string): Promise<Repertoire[]> {
-    const query = db.select().from(repertoire);
+  // Repertoire category methods
+  async getRepertoireCategories(languageCode?: string): Promise<RepertoireCategoryWithTranslations[]> {
+    const categoriesData = await db.select().from(repertoireCategories);
+    return await this.addTranslationsToCategories(categoriesData, languageCode);
+  }
+  
+  async getRepertoireCategory(id: number, languageCode?: string): Promise<RepertoireCategoryWithTranslations | undefined> {
+    const [category] = await db.select().from(repertoireCategories).where(eq(repertoireCategories.id, id));
     
-    if (category) {
-      return await query.where(eq(repertoire.category, category));
+    if (!category) {
+      return undefined;
     }
     
-    return await query;
+    const categoriesWithTranslations = await this.addTranslationsToCategories([category], languageCode);
+    return categoriesWithTranslations[0];
   }
   
-  async createRepertoire(repertoireItem: InsertRepertoire): Promise<Repertoire> {
-    const [newRepertoire] = await db
-      .insert(repertoire)
-      .values(repertoireItem)
+  private async addTranslationsToCategories(categories: RepertoireCategory[], languageCode?: string): Promise<RepertoireCategoryWithTranslations[]> {
+    if (categories.length === 0) {
+      return [];
+    }
+    
+    const categoryIds = categories.map(category => category.id);
+    let translations;
+    
+    if (languageCode) {
+      translations = await db.select()
+        .from(repertoireCategoryTranslations)
+        .where(and(
+          sql`${repertoireCategoryTranslations.categoryId} IN (${categoryIds.join(',')})`,
+          eq(repertoireCategoryTranslations.languageCode, languageCode)
+        ));
+    } else {
+      translations = await db.select()
+        .from(repertoireCategoryTranslations)
+        .where(sql`${repertoireCategoryTranslations.categoryId} IN (${categoryIds.join(',')})`);
+    }
+    
+    // Agrupar traduções por categoryId
+    const translationsByCategoryId = translations.reduce((acc, translation) => {
+      if (!acc[translation.categoryId]) {
+        acc[translation.categoryId] = [];
+      }
+      acc[translation.categoryId].push(translation);
+      return acc;
+    }, {} as Record<number, RepertoireCategoryTranslation[]>);
+    
+    // Adicionar traduções a cada categoria
+    return categories.map(category => {
+      return {
+        ...category,
+        translations: translationsByCategoryId[category.id] || []
+      };
+    });
+  }
+  
+  async createRepertoireCategory(category: InsertRepertoireCategory, translations: InsertRepertoireCategoryTranslation[]): Promise<RepertoireCategoryWithTranslations> {
+    // Insere a categoria
+    const [newCategory] = await db
+      .insert(repertoireCategories)
+      .values(category)
       .returning();
-    return newRepertoire;
+    
+    // Insere as traduções
+    const categoryTranslationsToInsert = translations.map(translation => ({
+      ...translation,
+      categoryId: newCategory.id
+    }));
+    
+    const insertedTranslations = await db
+      .insert(repertoireCategoryTranslations)
+      .values(categoryTranslationsToInsert)
+      .returning();
+    
+    // Retorna a categoria com suas traduções
+    return {
+      ...newCategory,
+      translations: insertedTranslations
+    };
+  }
+  
+  // Repertoire methods
+  async getRepertoire(categoryId?: number, languageCode?: string): Promise<RepertoireWithTranslations[]> {
+    let repertoireData;
+    
+    if (categoryId) {
+      repertoireData = await db.select().from(repertoire).where(eq(repertoire.categoryId, categoryId));
+    } else {
+      repertoireData = await db.select().from(repertoire);
+    }
+    
+    const repertoireWithTranslations = await this.addTranslationsToRepertoire(repertoireData, languageCode);
+    
+    // Adiciona as informações de categoria com suas traduções
+    if (repertoireWithTranslations.length > 0) {
+      const categoryIds = [...new Set(repertoireWithTranslations.map(item => item.categoryId))];
+      const categories = await Promise.all(
+        categoryIds.map(catId => this.getRepertoireCategory(catId, languageCode))
+      );
+      
+      // Mapeia categorias por id
+      const categoriesById = categories.reduce((acc, category) => {
+        if (category) {
+          acc[category.id] = category;
+        }
+        return acc;
+      }, {} as Record<number, RepertoireCategoryWithTranslations>);
+      
+      // Adiciona categoria a cada item do repertório
+      return repertoireWithTranslations.map(item => ({
+        ...item,
+        category: categoriesById[item.categoryId]
+      }));
+    }
+    
+    return repertoireWithTranslations;
+  }
+  
+  async getRepertoireItem(id: number, languageCode?: string): Promise<RepertoireWithTranslations | undefined> {
+    const [item] = await db.select().from(repertoire).where(eq(repertoire.id, id));
+    
+    if (!item) {
+      return undefined;
+    }
+    
+    const itemsWithTranslations = await this.addTranslationsToRepertoire([item], languageCode);
+    const itemWithTranslations = itemsWithTranslations[0];
+    
+    // Adiciona a categoria com suas traduções
+    const category = await this.getRepertoireCategory(item.categoryId, languageCode);
+    
+    return {
+      ...itemWithTranslations,
+      category
+    };
+  }
+  
+  private async addTranslationsToRepertoire(items: Repertoire[], languageCode?: string): Promise<RepertoireWithTranslations[]> {
+    if (items.length === 0) {
+      return [];
+    }
+    
+    const itemIds = items.map(item => item.id);
+    let translations;
+    
+    if (languageCode) {
+      translations = await db.select()
+        .from(repertoireTranslations)
+        .where(and(
+          sql`${repertoireTranslations.repertoireId} IN (${itemIds.join(',')})`,
+          eq(repertoireTranslations.languageCode, languageCode)
+        ));
+    } else {
+      translations = await db.select()
+        .from(repertoireTranslations)
+        .where(sql`${repertoireTranslations.repertoireId} IN (${itemIds.join(',')})`);
+    }
+    
+    // Agrupar traduções por repertoireId
+    const translationsByItemId = translations.reduce((acc, translation) => {
+      if (!acc[translation.repertoireId]) {
+        acc[translation.repertoireId] = [];
+      }
+      acc[translation.repertoireId].push(translation);
+      return acc;
+    }, {} as Record<number, RepertoireTranslation[]>);
+    
+    // Adicionar traduções a cada item
+    return items.map(item => {
+      return {
+        ...item,
+        translations: translationsByItemId[item.id] || []
+      };
+    });
+  }
+  
+  async createRepertoire(item: InsertRepertoire, translations: InsertRepertoireTranslation[]): Promise<RepertoireWithTranslations> {
+    // Insere o item
+    const [newItem] = await db
+      .insert(repertoire)
+      .values(item)
+      .returning();
+    
+    // Insere as traduções
+    const itemTranslationsToInsert = translations.map(translation => ({
+      ...translation,
+      repertoireId: newItem.id
+    }));
+    
+    const insertedTranslations = await db
+      .insert(repertoireTranslations)
+      .values(itemTranslationsToInsert)
+      .returning();
+    
+    // Busca a categoria com traduções
+    const category = await this.getRepertoireCategory(newItem.categoryId);
+    
+    // Retorna o item com suas traduções e categoria
+    return {
+      ...newItem,
+      translations: insertedTranslations,
+      category
+    };
   }
 }
 
