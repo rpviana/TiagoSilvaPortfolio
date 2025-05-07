@@ -2,8 +2,12 @@ import {
   User, InsertUser, 
   Message, InsertMessage, 
   Event, InsertEvent, 
-  Repertoire, InsertRepertoire 
+  Repertoire, InsertRepertoire,
+  users, messages, events, repertoire
 } from "@shared/schema";
+
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 // Storage interface
 export interface IStorage {
@@ -25,7 +29,7 @@ export interface IStorage {
   createRepertoire(repertoire: InsertRepertoire): Promise<Repertoire>;
 }
 
-// In-memory storage implementation
+// Classe de armazenamento em memória (mantida como referência)
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private messages: Map<number, Message>;
@@ -36,33 +40,36 @@ export class MemStorage implements IStorage {
   private messageId: number;
   private eventId: number;
   private repertoireId: number;
-
+  
   constructor() {
-    this.users = new Map();
-    this.messages = new Map();
-    this.events = new Map();
-    this.repertoireItems = new Map();
+    this.users = new Map<number, User>();
+    this.messages = new Map<number, Message>();
+    this.events = new Map<number, Event>();
+    this.repertoireItems = new Map<number, Repertoire>();
     
     this.userId = 1;
     this.messageId = 1;
     this.eventId = 1;
     this.repertoireId = 1;
     
-    // Initialize with sample events
+    // Initialize with sample data
     this.initializeData();
   }
-
-  // User methods
+  
   async getUser(id: number): Promise<User | undefined> {
     return this.users.get(id);
   }
-
+  
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    for (const user of this.users.values()) {
+      if (user.username === username) {
+        return user;
+      }
+    }
+    
+    return undefined;
   }
-
+  
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userId++;
     const user: User = { ...insertUser, id };
@@ -70,14 +77,16 @@ export class MemStorage implements IStorage {
     return user;
   }
   
-  // Message methods
   async createMessage(message: InsertMessage): Promise<Message> {
     const id = this.messageId++;
+    const createdAt = new Date();
+    
     const newMessage: Message = {
       ...message,
       id,
-      createdAt: new Date(),
+      createdAt
     };
+    
     this.messages.set(id, newMessage);
     return newMessage;
   }
@@ -86,7 +95,6 @@ export class MemStorage implements IStorage {
     return Array.from(this.messages.values());
   }
   
-  // Event methods
   async getEvents(isPast?: boolean): Promise<Event[]> {
     const events = Array.from(this.events.values());
     
@@ -316,4 +324,82 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Implementação do armazenamento usando banco de dados
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+  
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const [newMessage] = await db
+      .insert(messages)
+      .values(message)
+      .returning();
+    return newMessage;
+  }
+  
+  async getMessages(): Promise<Message[]> {
+    return await db.select().from(messages);
+  }
+  
+  async getEvents(isPast?: boolean): Promise<Event[]> {
+    const query = db.select().from(events);
+    
+    if (isPast !== undefined) {
+      return await query.where(eq(events.isPast, isPast));
+    }
+    
+    return await query;
+  }
+  
+  async createEvent(event: InsertEvent): Promise<Event> {
+    // Ensure properties have default values if undefined
+    const insertData = { 
+      ...event, 
+      isPast: event.isPast === undefined ? false : event.isPast,
+      bookingLink: event.bookingLink === undefined ? null : event.bookingLink,
+      programLink: event.programLink === undefined ? null : event.programLink
+    };
+    
+    const [newEvent] = await db
+      .insert(events)
+      .values(insertData)
+      .returning();
+    return newEvent;
+  }
+  
+  async getRepertoire(category?: string): Promise<Repertoire[]> {
+    const query = db.select().from(repertoire);
+    
+    if (category) {
+      return await query.where(eq(repertoire.category, category));
+    }
+    
+    return await query;
+  }
+  
+  async createRepertoire(repertoireItem: InsertRepertoire): Promise<Repertoire> {
+    const [newRepertoire] = await db
+      .insert(repertoire)
+      .values(repertoireItem)
+      .returning();
+    return newRepertoire;
+  }
+}
+
+// Exportando a implementação de armazenamento usando banco de dados
+export const storage = new DatabaseStorage();
