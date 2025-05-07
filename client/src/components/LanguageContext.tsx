@@ -1,6 +1,7 @@
-import React, { createContext, useState, useContext, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
-type Language = "en" | "pt";
+export type Language = "en" | "pt";
 
 interface LanguageContextType {
   language: Language;
@@ -14,18 +15,23 @@ interface LanguageProviderProps {
 }
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
-  // Try to get the language from localStorage, default to "en"
-  const storedLanguage = typeof window !== "undefined" 
-    ? localStorage.getItem("language") as Language 
-    : null;
+  const { i18n } = useTranslation();
   
-  const [language, setLanguageState] = useState<Language>(storedLanguage || "en");
+  // Initialize language from localStorage or use default language
+  const [language, setLanguageState] = useState<Language>(() => {
+    const savedLanguage = localStorage.getItem('language') as Language;
+    return savedLanguage || 'en';
+  });
+
+  // Initialize i18n with the current language
+  useEffect(() => {
+    i18n.changeLanguage(language);
+  }, [i18n, language]);
 
   const setLanguage = (lang: Language) => {
+    localStorage.setItem('language', lang);
     setLanguageState(lang);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("language", lang);
-    }
+    i18n.changeLanguage(lang);
   };
 
   return (
@@ -38,7 +44,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
 export const useLanguage = (): LanguageContextType => {
   const context = useContext(LanguageContext);
   if (context === undefined) {
-    throw new Error("useLanguage must be used within a LanguageProvider");
+    throw new Error('useLanguage must be used within a LanguageProvider');
   }
   return context;
 };
