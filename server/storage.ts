@@ -143,20 +143,29 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
     
-    const eventIds = events.map(event => event.id);
     let translations;
     
     if (languageCode) {
-      translations = await db.select()
-        .from(eventTranslations)
-        .where(and(
-          sql`${eventTranslations.eventId} IN (${eventIds.join(',')})`,
-          eq(eventTranslations.languageCode, languageCode)
-        ));
+      // Consulta por eventos com filtro de idioma
+      translations = await Promise.all(
+        events.map(event => 
+          db.select()
+            .from(eventTranslations)
+            .where(and(
+              eq(eventTranslations.eventId, event.id),
+              eq(eventTranslations.languageCode, languageCode)
+            ))
+        )
+      ).then(results => results.flat());
     } else {
-      translations = await db.select()
-        .from(eventTranslations)
-        .where(sql`${eventTranslations.eventId} IN (${eventIds.join(',')})`);
+      // Consulta por todas as traduções para todos os eventos
+      translations = await Promise.all(
+        events.map(event => 
+          db.select()
+            .from(eventTranslations)
+            .where(eq(eventTranslations.eventId, event.id))
+        )
+      ).then(results => results.flat());
     }
     
     // Agrupar traduções por eventId
@@ -224,20 +233,29 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
     
-    const categoryIds = categories.map(category => category.id);
     let translations;
     
     if (languageCode) {
-      translations = await db.select()
-        .from(repertoireCategoryTranslations)
-        .where(and(
-          sql`${repertoireCategoryTranslations.categoryId} IN (${categoryIds.join(',')})`,
-          eq(repertoireCategoryTranslations.languageCode, languageCode)
-        ));
+      // Consulta por categorias com filtro de idioma
+      translations = await Promise.all(
+        categories.map(category => 
+          db.select()
+            .from(repertoireCategoryTranslations)
+            .where(and(
+              eq(repertoireCategoryTranslations.categoryId, category.id),
+              eq(repertoireCategoryTranslations.languageCode, languageCode)
+            ))
+        )
+      ).then(results => results.flat());
     } else {
-      translations = await db.select()
-        .from(repertoireCategoryTranslations)
-        .where(sql`${repertoireCategoryTranslations.categoryId} IN (${categoryIds.join(',')})`);
+      // Consulta por todas as traduções para todas as categorias
+      translations = await Promise.all(
+        categories.map(category => 
+          db.select()
+            .from(repertoireCategoryTranslations)
+            .where(eq(repertoireCategoryTranslations.categoryId, category.id))
+        )
+      ).then(results => results.flat());
     }
     
     // Agrupar traduções por categoryId
@@ -297,9 +315,19 @@ export class DatabaseStorage implements IStorage {
     
     // Adiciona as informações de categoria com suas traduções
     if (repertoireWithTranslations.length > 0) {
-      const categoryIds = [...new Set(repertoireWithTranslations.map(item => item.categoryId))];
+      // Obter IDs de categorias únicos
+      const uniqueCategoryIds: number[] = [];
+      const categoryIdsSet = new Set<number>();
+      
+      repertoireWithTranslations.forEach(item => {
+        if (!categoryIdsSet.has(item.categoryId)) {
+          categoryIdsSet.add(item.categoryId);
+          uniqueCategoryIds.push(item.categoryId);
+        }
+      });
+      
       const categories = await Promise.all(
-        categoryIds.map(catId => this.getRepertoireCategory(catId, languageCode))
+        uniqueCategoryIds.map(catId => this.getRepertoireCategory(catId, languageCode))
       );
       
       // Mapeia categorias por id
@@ -344,20 +372,29 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
     
-    const itemIds = items.map(item => item.id);
     let translations;
     
     if (languageCode) {
-      translations = await db.select()
-        .from(repertoireTranslations)
-        .where(and(
-          sql`${repertoireTranslations.repertoireId} IN (${itemIds.join(',')})`,
-          eq(repertoireTranslations.languageCode, languageCode)
-        ));
+      // Consulta por itens com filtro de idioma
+      translations = await Promise.all(
+        items.map(item => 
+          db.select()
+            .from(repertoireTranslations)
+            .where(and(
+              eq(repertoireTranslations.repertoireId, item.id),
+              eq(repertoireTranslations.languageCode, languageCode)
+            ))
+        )
+      ).then(results => results.flat());
     } else {
-      translations = await db.select()
-        .from(repertoireTranslations)
-        .where(sql`${repertoireTranslations.repertoireId} IN (${itemIds.join(',')})`);
+      // Consulta por todas as traduções para todos os itens
+      translations = await Promise.all(
+        items.map(item => 
+          db.select()
+            .from(repertoireTranslations)
+            .where(eq(repertoireTranslations.repertoireId, item.id))
+        )
+      ).then(results => results.flat());
     }
     
     // Agrupar traduções por repertoireId
