@@ -1,10 +1,25 @@
 import { useTranslation } from 'react-i18next';
-import { Event } from '@shared/schema';
 import { format } from 'date-fns';
 import { enUS, pt } from 'date-fns/locale';
 
+interface EventTranslation {
+  title: string;
+  description: string;
+  language_code: string;
+}
+
+interface EventWithTranslations {
+  id: number;
+  date: string;
+  time: string;
+  venue: string;
+  bookingLink?: string;
+  programLink?: string;
+  translations: EventTranslation[];
+}
+
 interface EventCardProps {
-  event: Event;
+  event: EventWithTranslations;
   isPast?: boolean;
 }
 
@@ -15,6 +30,11 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   // Format date based on current language
   const formattedDate = format(new Date(event.date), 'dd', { locale });
   const formattedMonth = format(new Date(event.date), 'MMMM yyyy', { locale });
+  
+  // Get the current translation based on language
+  const currentTranslation = event.translations.find(
+    translation => translation.language_code === i18n.language
+  ) || event.translations[0];
   
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -30,11 +50,13 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
         
         {/* Event Details */}
         <div className="md:col-span-3 p-6">
-          <h3 className="text-xl font-playfair font-bold mb-2 text-primary">{event.title}</h3>
+          <h3 className="text-xl font-playfair font-bold mb-2 text-primary">
+            {currentTranslation?.title || 'Event'}
+          </h3>
           <div className="text-sm text-gray-600 mb-4">{event.venue}</div>
           
           <p className="text-gray-700 text-sm mb-4">
-            {event.description}
+            {currentTranslation?.description || ''}
           </p>
           
           <div className="flex flex-wrap gap-3">
