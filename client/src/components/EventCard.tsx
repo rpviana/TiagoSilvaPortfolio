@@ -3,9 +3,11 @@ import { format } from 'date-fns';
 import { enUS, pt } from 'date-fns/locale';
 
 interface EventTranslation {
+  id: number;
+  eventId: number;
+  languageCode: string;
   title: string;
   description: string;
-  language_code: string;
 }
 
 interface EventWithTranslations {
@@ -13,6 +15,7 @@ interface EventWithTranslations {
   date: string;
   time: string;
   venue: string;
+  isPast: boolean;
   bookingLink?: string;
   programLink?: string;
   translations: EventTranslation[];
@@ -33,7 +36,7 @@ const EventCard = ({ event, isPast = false }: EventCardProps) => {
   
   // Get the current translation based on language
   const currentTranslation = event.translations.find(
-    translation => translation.language_code === i18n.language
+    translation => translation.languageCode === i18n.language
   ) || event.translations[0];
   
   return (

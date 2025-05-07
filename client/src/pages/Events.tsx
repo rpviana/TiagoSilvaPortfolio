@@ -1,12 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import EventCard from '../components/EventCard';
+import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
+import { useLanguageManager } from '../hooks/useLanguageManager';
+
 // Define the event type with translations
 interface EventTranslation {
+  id: number;
+  eventId: number;
+  languageCode: string;
   title: string;
   description: string;
-  language_code: string;
 }
 
 interface EventWithTranslations {
@@ -14,14 +20,11 @@ interface EventWithTranslations {
   date: string;
   time: string;
   venue: string;
-  is_past: boolean;
+  isPast: boolean;
   bookingLink?: string;
   programLink?: string;
   translations: EventTranslation[];
 }
-import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
-import { useLanguageManager } from '../hooks/useLanguageManager';
 
 const Events = () => {
   const { t } = useTranslation();
@@ -32,7 +35,7 @@ const Events = () => {
   const upcomingEventsQuery = useQuery<EventWithTranslations[]>({
     queryKey: ['/api/events', { isPast: false, language }],
     queryFn: async () => {
-      const res = await fetch(`/api/events?isPast=false&language=${language}`);
+      const res = await fetch(`/api/events?isPast=false&lang=${language}`);
       if (!res.ok) throw new Error('Failed to fetch upcoming events');
       return res.json();
     },
@@ -43,7 +46,7 @@ const Events = () => {
   const pastEventsQuery = useQuery<EventWithTranslations[]>({
     queryKey: ['/api/events', { isPast: true, language }],
     queryFn: async () => {
-      const res = await fetch(`/api/events?isPast=true&language=${language}`);
+      const res = await fetch(`/api/events?isPast=true&lang=${language}`);
       if (!res.ok) throw new Error('Failed to fetch past events');
       return res.json();
     },
