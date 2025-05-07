@@ -1,102 +1,104 @@
-import { Link } from "wouter";
-import { Facebook, Instagram, Linkedin, Youtube } from "lucide-react";
-import { useLanguage } from "./LanguageContext";
-import { translations } from "@/lib/translations";
+import { Link } from 'wouter';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 
-export default function Footer() {
-  const { language } = useLanguage();
-  const t = translations[language];
-
+const Footer = () => {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
-
-  const navLinks = [
-    { href: "/biography", label: t.nav.about },
-    { href: "/gallery", label: t.nav.gallery },
-    { href: "/recordings", label: t.nav.recordings },
-    { href: "/calendar", label: t.nav.calendar },
-    { href: "/contact", label: t.nav.contact },
-  ];
-
+  
   const socialLinks = [
-    {
-      href: "https://www.facebook.com/tiago.soaressilva.arts",
-      icon: <Facebook className="h-5 w-5" />,
-      label: "Facebook",
-    },
-    {
-      href: "https://www.instagram.com/tiagosilva_violin/",
-      icon: <Instagram className="h-5 w-5" />,
-      label: "Instagram",
-    },
-    {
-      href: "http://www.youtube.com/@tiagosoaressilva7056",
-      icon: <Youtube className="h-5 w-5" />,
-      label: "Youtube",
-    },
-    {
-      href: "http://www.linkedin.com/in/tiago-soares-silva-violin",
-      icon: <Linkedin className="h-5 w-5" />,
-      label: "LinkedIn",
-    },
+    { icon: "facebook-f", url: "https://www.facebook.com/tiago.soaressilva.arts", label: "Facebook" },
+    { icon: "instagram", url: "https://www.instagram.com/tiagosilva_violin/", label: "Instagram" },
+    { icon: "linkedin-in", url: "https://www.linkedin.com/in/tiago-soares-silva-violin", label: "LinkedIn" },
+    { icon: "youtube", url: "https://www.youtube.com/@tiagosoaressilva7056", label: "YouTube" },
   ];
-
+  
+  const quickLinks = [
+    { path: "/about", label: t("nav.about") },
+    { path: "/gallery", label: t("nav.gallery") },
+    { path: "/discography", label: t("nav.discography") },
+    { path: "/projects", label: t("nav.projects") },
+    { path: "/events", label: t("nav.events") },
+    { path: "/contact", label: t("nav.contact") },
+  ];
+  
   return (
-    <footer className="bg-charcoal text-white py-12">
+    <footer className="bg-gray-900 text-white py-12">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row justify-between items-center">
-          <div className="mb-6 md:mb-0">
-            <h2 className="text-2xl font-playfair font-bold mb-2">
-              Tiago Soares Silva
-            </h2>
-            <p className="text-gray-400">
-              {t.footer.tagline}
-            </p>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="md:col-span-2">
+              <h3 className="text-xl font-playfair font-bold mb-4">Tiago Soares Silva</h3>
+              <p className="text-gray-400 mb-6">
+                {t("footer.description")}
+              </p>
+              <div className="flex space-x-4">
+                {socialLinks.map((link) => (
+                  <a 
+                    key={link.label}
+                    href={link.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white transition-colors"
+                    aria-label={link.label}
+                  >
+                    <i className={`fab fa-${link.icon}`}></i>
+                  </a>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="text-lg font-bold mb-4">{t("footer.quickLinks")}</h4>
+              <ul className="space-y-2">
+                {quickLinks.map((link) => (
+                  <li key={link.path}>
+                    <Link href={link.path} className="text-gray-400 hover:text-white transition-colors">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="text-lg font-bold mb-4">{t("footer.contact")}</h4>
+              <ul className="space-y-2">
+                <li className="flex items-start">
+                  <i className="fas fa-envelope text-gray-400 mt-1 mr-3"></i>
+                  <a 
+                    href="mailto:tiagosilva.05.2000@gmail.com" 
+                    className="text-gray-400 hover:text-white transition-colors break-all"
+                  >
+                    tiagosilva.05.2000@gmail.com
+                  </a>
+                </li>
+                <li className="flex items-start">
+                  <i className="fab fa-whatsapp text-gray-400 mt-1 mr-3"></i>
+                  <a 
+                    href="https://wa.me/447784730680" 
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    +44 (0) 778 473 0680
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
-
-          <div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-6 md:mb-0">
-            {navLinks.map((link) => (
-              <Link key={link.href} href={link.href}>
-                <a className="text-gray-300 hover:text-white transition-all">
-                  {link.label}
-                </a>
-              </Link>
-            ))}
-          </div>
-
-          <div className="flex space-x-4">
-            {socialLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-300 hover:text-white transition-all"
-                aria-label={link.label}
-              >
-                {link.icon}
-              </a>
-            ))}
-          </div>
-        </div>
-
-        <div className="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 text-sm mb-4 md:mb-0">
-            &copy; {currentYear} Tiago Soares Silva. {t.footer.rights}
-          </p>
-          <div className="flex space-x-4">
-            <Link href="/privacy-policy">
-              <a className="text-gray-400 text-sm hover:text-white transition-all">
-                {t.footer.privacy}
-              </a>
-            </Link>
-            <Link href="/terms">
-              <a className="text-gray-400 text-sm hover:text-white transition-all">
-                {t.footer.terms}
-              </a>
-            </Link>
+          
+          <div className="border-t border-gray-800 mt-10 pt-6 flex flex-col md:flex-row justify-between items-center">
+            <div className="text-gray-500 text-sm mb-4 md:mb-0">
+              &copy; {currentYear} Tiago Soares Silva. {t("footer.copyright")}
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <LanguageSwitcher className="text-gray-400 hover:text-white" />
+            </div>
           </div>
         </div>
       </div>
     </footer>
   );
-}
+};
+
+export default Footer;

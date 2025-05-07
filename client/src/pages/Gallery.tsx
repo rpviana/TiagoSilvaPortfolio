@@ -1,91 +1,105 @@
-import { useState } from "react";
-import { useLanguage } from "@/components/LanguageContext";
-import { translations } from "@/lib/translations";
-import GalleryLightbox from "@/components/ui/gallery-lightbox";
+import { useTranslation } from 'react-i18next';
+import MediaGallery from '../components/MediaGallery';
+import { motion } from 'framer-motion';
 
-type GalleryImage = {
-  src: string;
-  alt: string;
-  thumbnail: string;
-};
+const Gallery = () => {
+  const { t } = useTranslation();
 
-export default function Gallery() {
-  const { language } = useLanguage();
-  const t = translations[language];
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  const galleryImages: GalleryImage[] = [
+  // Gallery images
+  const images = [
     {
       src: "/attached_assets/Tiago-Violino-52.JPG",
-      alt: "Portrait with violin scroll",
-      thumbnail: "/attached_assets/Tiago-Violino-52.JPG",
+      alt: "Tiago Soares Silva portrait with violin"
     },
     {
       src: "/attached_assets/Tiago-Violino-54.JPG",
-      alt: "Looking down at violin",
-      thumbnail: "/attached_assets/Tiago-Violino-54.JPG",
+      alt: "Tiago Soares Silva with violin"
     },
     {
       src: "/attached_assets/Tiago-Violino-68.JPG",
-      alt: "Black and white performance",
-      thumbnail: "/attached_assets/Tiago-Violino-68.JPG",
+      alt: "Black and white portrait of Tiago Soares Silva performing"
     },
     {
       src: "/attached_assets/Tiago-Violino-87.JPG",
-      alt: "Outdoor performance",
-      thumbnail: "/attached_assets/Tiago-Violino-87.JPG",
+      alt: "Tiago Soares Silva performing"
     },
     {
       src: "/attached_assets/Tiago-Violino-99.JPG",
-      alt: "Portrait against stone wall",
-      thumbnail: "/attached_assets/Tiago-Violino-99.JPG",
+      alt: "Outdoor portrait of Tiago Soares Silva with violin"
     },
     {
       src: "/attached_assets/Tiago-Violino-100.JPG",
-      alt: "Black and white portrait against stone wall",
-      thumbnail: "/attached_assets/Tiago-Violino-100.JPG",
-    },
+      alt: "Black and white outdoor portrait of Tiago Soares Silva with violin"
+    }
   ];
-
-  const openLightbox = (index: number) => {
-    setCurrentImageIndex(index);
-    setLightboxOpen(true);
-  };
-
+  
   return (
-    <section className="pt-24 pb-16 bg-cream-dark">
-      <div className="container mx-auto px-4">
-        <h1 className="text-3xl md:text-4xl font-playfair font-bold text-purple mb-2 text-center">
-          {t.gallery.title}
-        </h1>
-        <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-          {t.gallery.subtitle}
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {galleryImages.map((image, index) => (
-            <div
-              key={index}
-              className="gallery-item h-80 overflow-hidden rounded-lg shadow-lg transition-transform hover:scale-105 cursor-pointer"
-              onClick={() => openLightbox(index)}
+    <div className="pt-24">
+      <section className="py-16 md:py-24 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-center mb-12"
             >
-              <img
-                src={image.thumbnail}
-                alt={image.alt}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
+              <h1 className="text-4xl md:text-5xl font-playfair font-bold mb-4 text-primary">
+                {t('gallery.title')}
+              </h1>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                {t('gallery.description')}
+              </p>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <MediaGallery images={images} />
+            </motion.div>
+            
+            {/* Videos Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="mt-20"
+            >
+              <h2 className="text-3xl font-playfair font-bold mb-8 text-primary">
+                {t('gallery.videos')}
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="aspect-w-16 aspect-h-9">
+                  <iframe 
+                    className="w-full h-full rounded-lg shadow-lg"
+                    src="https://www.youtube.com/embed/videoseries?list=PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG" 
+                    title="YouTube video player" 
+                    frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
+                  ></iframe>
+                </div>
+                
+                <div className="aspect-w-16 aspect-h-9">
+                  <iframe 
+                    className="w-full h-full rounded-lg shadow-lg"
+                    src="https://www.youtube.com/embed/videoseries?list=PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG" 
+                    title="YouTube video player" 
+                    frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
+                  ></iframe>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </div>
-
-        <GalleryLightbox
-          images={galleryImages.map((img) => ({ src: img.src, alt: img.alt }))}
-          open={lightboxOpen}
-          onOpenChange={setLightboxOpen}
-          initialIndex={currentImageIndex}
-        />
-      </div>
-    </section>
+      </section>
+    </div>
   );
-}
+};
+
+export default Gallery;

@@ -1,117 +1,109 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
-import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useLanguage } from "./LanguageContext";
-import { translations } from "@/lib/translations";
-import LanguageToggle from "./ui/language-toggle";
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'wouter';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Menu, X } from 'lucide-react';
 
-export default function Header() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+const Header = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const { t } = useTranslation();
   const [location] = useLocation();
-  const { language } = useLanguage();
-
-  // Update header style on scroll
+  
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const closeMenu = () => setIsMenuOpen(false);
+  
+  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      if (window.scrollY > 50) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
     };
-
-    window.addEventListener("scroll", handleScroll);
-    handleScroll(); // Check initial scroll position
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location]);
-
-  const t = translations[language];
-
+  
   const navLinks = [
-    { href: "/biography", label: t.nav.about },
-    { href: "/gallery", label: t.nav.gallery },
-    { href: "/recordings", label: t.nav.recordings },
-    { href: "/repertoire", label: t.nav.repertoire },
-    { href: "/discography", label: t.nav.discography },
-    { href: "/calendar", label: t.nav.calendar },
-    { href: "/projects", label: t.nav.projects },
-    { href: "/contact", label: t.nav.contact },
+    { path: "/about", label: t("nav.about") },
+    { path: "/gallery", label: t("nav.gallery") },
+    { path: "/discography", label: t("nav.discography") },
+    { path: "/projects", label: t("nav.projects") },
+    { path: "/events", label: t("nav.events") },
+    { path: "/contact", label: t("nav.contact") },
   ];
-
+  
   return (
-    <header
-      className={`fixed w-full z-50 transition-all duration-300 ${
-        isScrolled || mobileMenuOpen ? "bg-white shadow-md" : ""
-      }`}
-    >
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <div>
-          <Link href="/">
-            <a className="text-2xl font-playfair font-bold text-purple hover:text-gold transition-all">
-              Tiago Soares Silva
-            </a>
+    <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 shadow-sm' : 'bg-transparent'}`}>
+      <div className="container mx-auto px-4 py-2 md:py-4">
+        <div className="flex justify-between items-center">
+          <Link href="/" onClick={closeMenu} className="text-xl md:text-2xl font-playfair font-bold text-primary transition-colors">
+            Tiago Soares Silva
           </Link>
-        </div>
-
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex space-x-1 items-center">
-          {navLinks.map((link) => (
-            <Link key={link.href} href={link.href}>
-              <a
-                className={`px-3 py-2 rounded hover:bg-purple hover:text-white transition-all ${
-                  location === link.href ? "text-purple font-medium" : ""
-                }`}
-              >
-                {link.label}
-              </a>
-            </Link>
-          ))}
-          <div className="border-l border-gray-300 h-5 mx-2"></div>
-          <LanguageToggle />
-        </div>
-
-        {/* Mobile Menu Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden text-purple"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <Menu className="h-6 w-6" />
-          )}
-        </Button>
-      </div>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white w-full border-t border-gray-100">
-          <div className="container mx-auto px-4 py-2 flex flex-col space-y-2">
-            {navLinks.map((link) => (
-              <Link key={link.href} href={link.href}>
-                <a
-                  className={`px-3 py-2 rounded hover:bg-purple hover:text-white transition-all ${
-                    location === link.href ? "text-purple font-medium" : ""
-                  }`}
+          
+          <div className="hidden md:flex items-center space-x-8">
+            <nav className="flex space-x-6">
+              {navLinks.map((link) => (
+                <Link 
+                  key={link.path}
+                  href={link.path} 
+                  className={`nav-link ${location === link.path ? 'text-primary' : 'text-foreground/80'}`}
                 >
                   {link.label}
-                </a>
-              </Link>
-            ))}
-            <div className="flex space-x-2 border-t border-gray-200 pt-2 mt-2">
-              <LanguageToggle isMobile />
-            </div>
+                </Link>
+              ))}
+            </nav>
+            
+            <LanguageSwitcher />
           </div>
+          
+          <button 
+            className="md:hidden text-foreground focus:outline-none" 
+            onClick={toggleMenu}
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
-      )}
+      </div>
+      
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="md:hidden bg-white shadow-md"
+          >
+            <div className="container mx-auto px-4 py-3">
+              <nav className="flex flex-col space-y-3">
+                {navLinks.map((link) => (
+                  <Link 
+                    key={link.path}
+                    href={link.path} 
+                    className={`py-2 ${location === link.path ? 'text-primary' : 'text-foreground/80'}`}
+                    onClick={closeMenu}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                
+                <div className="flex items-center space-x-4 pt-2 border-t border-gray-200">
+                  <LanguageSwitcher />
+                </div>
+              </nav>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
-}
+};
+
+export default Header;
