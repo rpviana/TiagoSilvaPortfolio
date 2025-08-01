@@ -1,7 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertMessageSchema, insertLanguageSchema, insertEventTranslationSchema, insertDiscographyReviewSchema } from "@shared/schema";
+import { authenticateToken, requireAdmin, loginUser, AuthRequest } from "./auth";
+import { insertMessageSchema, insertLanguageSchema, insertEventTranslationSchema, insertDiscographyReviewSchema, loginSchema } from "@shared/schema";
 import nodemailer from 'nodemailer';
 import path from 'path';
 import express from 'express';
@@ -9,6 +10,38 @@ import express from 'express';
 export async function registerRoutes(app: Express): Promise<Server> {
   // Serve static assets from attached_assets directory
   app.use('/attached_assets', express.static(path.resolve(import.meta.dirname, '..', 'attached_assets')));
+  
+  // Authentication routes
+  app.post('/api/auth/login', async (req: Request, res: Response) => {
+    try {
+      const { username, password } = loginSchema.parse(req.body);
+      const result = await loginUser(username, password);
+      res.json(result);
+    } catch (error: any) {
+      console.error('Login error:', error);
+      res.status(401).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+      res.json({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isAdmin: user.isAdmin
+      });
+    } catch (error) {
+      console.error('Get user error:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
   
   // API routes
 

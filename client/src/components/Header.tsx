@@ -2,14 +2,22 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
+// import AdminLogin from './AdminLogin';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Settings, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+// import { useAuth } from '@/hooks/useAuth';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const { t } = useTranslation();
   const [location] = useLocation();
+  // const { user, isAuthenticated, logout } = useAuth();
+  const user = null;
+  const isAuthenticated = false;
+  const logout = () => {};
   
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
@@ -59,6 +67,39 @@ const Header = () => {
             </nav>
             
             <LanguageSwitcher />
+            
+            {/* Admin controls */}
+            {isAuthenticated && user?.isAdmin ? (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.location.href = '/admin'}
+                  className="text-foreground/80 hover:text-primary"
+                >
+                  <Settings size={16} className="mr-1" />
+                  Admin
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={logout}
+                  className="text-foreground/80 hover:text-red-600"
+                >
+                  <LogOut size={16} />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowLogin(true)}
+                className="text-foreground/80 hover:text-primary"
+              >
+                <Settings size={16} className="mr-1" />
+                Login
+              </Button>
+            )}
           </div>
           
           <button 
@@ -94,14 +135,62 @@ const Header = () => {
                   </Link>
                 ))}
                 
-                <div className="flex items-center space-x-4 pt-2 border-t border-gray-200">
+                <div className="flex items-center justify-between pt-2 border-t border-gray-200">
                   <LanguageSwitcher />
+                  
+                  {isAuthenticated && user?.isAdmin ? (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          closeMenu();
+                          window.location.href = '/admin';
+                        }}
+                        className="text-primary"
+                      >
+                        <Settings size={16} className="mr-1" />
+                        Admin
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          closeMenu();
+                          logout();
+                        }}
+                        className="text-red-600"
+                      >
+                        <LogOut size={16} />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        closeMenu();
+                        setShowLogin(true);
+                      }}
+                      className="text-primary"
+                    >
+                      <Settings size={16} className="mr-1" />
+                      Login
+                    </Button>
+                  )}
                 </div>
               </nav>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {/* Login Modal - Temporarily disabled */}
+      {/* <AnimatePresence>
+        {showLogin && (
+          <AdminLogin onClose={() => setShowLogin(false)} />
+        )}
+      </AnimatePresence> */}
     </header>
   );
 };

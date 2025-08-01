@@ -12,17 +12,35 @@ export const languages = pgTable("languages", {
 
 export const insertLanguageSchema = createInsertSchema(languages);
 
-// User schema
+// User schema with admin functionality
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  email: text("email"),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  isAdmin: boolean("is_admin").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  isAdmin: true,
 });
+
+// Login schema
+export const loginSchema = z.object({
+  username: z.string().min(1, "Username é obrigatório"),
+  password: z.string().min(1, "Password é obrigatória"),
+});
+
+export type LoginData = z.infer<typeof loginSchema>;
 
 // Contact form message schema
 export const messages = pgTable("messages", {
