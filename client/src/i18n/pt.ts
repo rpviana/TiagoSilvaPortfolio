@@ -63,7 +63,13 @@ export default {
     criticalAcclaim: 'Aclamação Crítica',
     officialSite: 'Site Oficial',
     appleMusic: 'Apple Music',
-    sample: 'Amostra'
+    sample: 'Amostra',
+    showReviews: 'Ver Críticas',
+    hideReviews: 'Ocultar Críticas',
+    reviewsTitle: 'Críticas',
+    noReviews: 'Ainda não há críticas para este álbum.',
+    playPreview: 'Reproduzir Prévia',
+    pausePreview: 'Pausar Prévia'
   },
   
   projects: {

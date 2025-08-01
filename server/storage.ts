@@ -8,10 +8,12 @@ import {
   RepertoireCategory, InsertRepertoireCategory,
   RepertoireCategoryTranslation, InsertRepertoireCategoryTranslation,
   RepertoireTranslation, InsertRepertoireTranslation,
+  DiscographyReview, InsertDiscographyReview,
+  DiscographyReviewTranslation, InsertDiscographyReviewTranslation,
   users, messages, events, repertoire,
   languages, eventTranslations, 
   repertoireCategories, repertoireCategoryTranslations, 
-  repertoireTranslations, discography, discographyReviews
+  repertoireTranslations, discography, discographyReviews, discographyReviewTranslations
 } from "@shared/schema";
 
 import { db } from "./db";
@@ -450,20 +452,27 @@ export class DatabaseStorage implements IStorage {
     return items;
   }
 
-  async getDiscographyReviews(discographyId: number): Promise<any[]> {
+  async getDiscographyReviews(discographyId: number, language: string = 'pt'): Promise<any[]> {
     const reviews = await db
       .select({
         id: discographyReviews.id,
-        reviewerName: discographyReviews.reviewerName,
-        reviewText: discographyReviews.reviewText,
+        reviewerName: discographyReviewTranslations.reviewerName,
+        reviewText: discographyReviewTranslations.reviewText,
         rating: discographyReviews.rating,
         createdAt: discographyReviews.createdAt
       })
       .from(discographyReviews)
+      .leftJoin(
+        discographyReviewTranslations,
+        and(
+          eq(discographyReviewTranslations.reviewId, discographyReviews.id),
+          eq(discographyReviewTranslations.languageCode, language)
+        )
+      )
       .where(eq(discographyReviews.discographyId, discographyId))
       .orderBy(desc(discographyReviews.createdAt));
     
-    return reviews;
+    return reviews.filter(review => review.reviewerName && review.reviewText);
   }
 
   async createDiscographyReview(reviewData: any): Promise<any> {

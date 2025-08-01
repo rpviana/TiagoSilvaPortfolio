@@ -213,7 +213,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid discography ID' });
       }
       
-      const reviews = await storage.getDiscographyReviews(discographyId);
+      const language = req.query.lang as string || 'pt';
+      const reviews = await storage.getDiscographyReviews(discographyId, language);
       res.json(reviews);
     } catch (error) {
       console.error('Error fetching reviews:', error);

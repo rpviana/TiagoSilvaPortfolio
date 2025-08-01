@@ -56,10 +56,10 @@ const Discography = () => {
 
   // Query para buscar reviews de um álbum específico
   const { data: reviews = [], isLoading: reviewsLoading } = useQuery({
-    queryKey: ['discography-reviews', selectedAlbum],
+    queryKey: ['discography-reviews', selectedAlbum, t.language],
     queryFn: async () => {
       if (!selectedAlbum) return [];
-      const response = await fetch(`/api/discography/${selectedAlbum}/reviews`);
+      const response = await fetch(`/api/discography/${selectedAlbum}/reviews?lang=${t.language || 'pt'}`);
       if (!response.ok) throw new Error('Failed to fetch reviews');
       return response.json();
     },
@@ -110,7 +110,7 @@ const Discography = () => {
                           onClick={() => handlePlayPause(album.title)}
                         >
                           {playingUrl === album.title ? <Pause className="mr-2" size={20} /> : <Play className="mr-2" size={20} />}
-                          {playingUrl === album.title ? 'Pause Preview' : 'Play Preview'}
+                          {playingUrl === album.title ? t('discography.pausePreview') : t('discography.playPreview')}
                         </Button>
                       </div>
                     </div>
@@ -160,7 +160,7 @@ const Discography = () => {
                           className="text-primary hover:text-primary-dark"
                           onClick={() => setSelectedAlbum(selectedAlbum === album.id ? null : album.id)}
                         >
-                          {selectedAlbum === album.id ? 'Ocultar Críticas' : 'Ver Críticas'}
+                          {selectedAlbum === album.id ? t('discography.hideReviews') : t('discography.showReviews')}
                         </Button>
                       </div>
                     </CardContent>
@@ -170,7 +170,7 @@ const Discography = () => {
                       <CardContent className="pt-0">
                         <div className="border-t pt-6">
                           <h4 className="font-playfair text-lg font-bold mb-4 text-primary">
-                            Críticas
+                            {t('discography.reviewsTitle')}
                           </h4>
                           
                           {reviewsLoading ? (
@@ -218,7 +218,7 @@ const Discography = () => {
                           ) : (
                             <div className="text-center py-8 text-gray-500">
                               <Quote className="mx-auto mb-3 text-gray-300" size={48} />
-                              <p>Ainda não há críticas para este álbum.</p>
+                              <p>{t('discography.noReviews')}</p>
                             </div>
                           )}
                         </div>

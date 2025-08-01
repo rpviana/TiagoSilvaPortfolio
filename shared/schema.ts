@@ -249,9 +249,7 @@ export const insertDiscographySchema = createInsertSchema(discography).pick({
 export const discographyReviews = pgTable("discography_reviews", {
   id: serial("id").primaryKey(),
   discographyId: integer("discography_id").notNull().references(() => discography.id, { onDelete: "cascade" }),
-  reviewerName: text("reviewer_name").notNull(),
   reviewerNif: text("reviewer_nif").notNull(), // NIF para evitar múltiplas críticas da mesma pessoa
-  reviewText: text("review_text").notNull(),
   rating: integer("rating"), // opcional, de 1 a 5 estrelas
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => {
@@ -262,10 +260,28 @@ export const discographyReviews = pgTable("discography_reviews", {
 
 export const insertDiscographyReviewSchema = createInsertSchema(discographyReviews).pick({
   discographyId: true,
-  reviewerName: true,
   reviewerNif: true,
-  reviewText: true,
   rating: true,
+});
+
+// Translations for discography reviews
+export const discographyReviewTranslations = pgTable("discography_review_translations", {
+  id: serial("id").primaryKey(),
+  reviewId: integer("review_id").notNull().references(() => discographyReviews.id, { onDelete: "cascade" }),
+  languageCode: varchar("language_code", { length: 2 }).notNull().references(() => languages.code),
+  reviewerName: text("reviewer_name").notNull(),
+  reviewText: text("review_text").notNull(),
+}, (table) => {
+  return {
+    uniqueLangPerReview: unique().on(table.reviewId, table.languageCode),
+  }
+});
+
+export const insertDiscographyReviewTranslationSchema = createInsertSchema(discographyReviewTranslations).pick({
+  reviewId: true,
+  languageCode: true,
+  reviewerName: true,
+  reviewText: true,
 });
 
 // Relações para discografia
@@ -274,10 +290,23 @@ export const discographyRelations = relations(discography, ({ many }) => ({
 }));
 
 // Relações para críticas
-export const discographyReviewsRelations = relations(discographyReviews, ({ one }) => ({
+export const discographyReviewsRelations = relations(discographyReviews, ({ one, many }) => ({
   discography: one(discography, {
     fields: [discographyReviews.discographyId],
     references: [discography.id]
+  }),
+  translations: many(discographyReviewTranslations),
+}));
+
+// Relações para traduções de críticas
+export const discographyReviewTranslationsRelations = relations(discographyReviewTranslations, ({ one }) => ({
+  review: one(discographyReviews, {
+    fields: [discographyReviewTranslations.reviewId],
+    references: [discographyReviews.id]
+  }),
+  language: one(languages, {
+    fields: [discographyReviewTranslations.languageCode],
+    references: [languages.code]
   })
 }));
 
@@ -286,3 +315,6 @@ export type Discography = typeof discography.$inferSelect;
 
 export type InsertDiscographyReview = z.infer<typeof insertDiscographyReviewSchema>;
 export type DiscographyReview = typeof discographyReviews.$inferSelect;
+
+export type InsertDiscographyReviewTranslation = z.infer<typeof insertDiscographyReviewTranslationSchema>;
+export type DiscographyReviewTranslation = typeof discographyReviewTranslations.$inferSelect;
