@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { ExternalLink, Play, Pause } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { ExternalLink, Play, Pause, Star, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -17,9 +18,18 @@ interface DiscographyItem {
   amazonUrl?: string;
 }
 
+interface Review {
+  id: number;
+  reviewerName: string;
+  reviewText: string;
+  rating?: number;
+  createdAt: string;
+}
+
 const Discography = () => {
   const { t } = useTranslation();
   const [playingUrl, setPlayingUrl] = useState<string | null>(null);
+  const [selectedAlbum, setSelectedAlbum] = useState<number | null>(null);
 
   // Mock data for albums (será substituído por dados do banco depois)
   const albums: DiscographyItem[] = [
@@ -43,6 +53,18 @@ const Discography = () => {
       appleMusicUrl: "https://music.apple.com/album/example2",
     }
   ];
+
+  // Query para buscar reviews de um álbum específico
+  const { data: reviews = [], isLoading: reviewsLoading } = useQuery({
+    queryKey: ['discography-reviews', selectedAlbum],
+    queryFn: async () => {
+      if (!selectedAlbum) return [];
+      const response = await fetch(`/api/discography/${selectedAlbum}/reviews`);
+      if (!response.ok) throw new Error('Failed to fetch reviews');
+      return response.json();
+    },
+    enabled: !!selectedAlbum
+  });
 
   const handlePlayPause = (url: string) => {
     if (playingUrl === url) {
@@ -130,7 +152,78 @@ const Discography = () => {
                           </Button>
                         )}
                       </div>
+
+                      {/* Reviews Button */}
+                      <div className="mt-4 pt-4 border-t">
+                        <Button
+                          variant="ghost"
+                          className="text-primary hover:text-primary-dark"
+                          onClick={() => setSelectedAlbum(selectedAlbum === album.id ? null : album.id)}
+                        >
+                          {selectedAlbum === album.id ? 'Ocultar Críticas' : 'Ver Críticas'}
+                        </Button>
+                      </div>
                     </CardContent>
+
+                    {/* Reviews Section */}
+                    {selectedAlbum === album.id && (
+                      <CardContent className="pt-0">
+                        <div className="border-t pt-6">
+                          <h4 className="font-playfair text-lg font-bold mb-4 text-primary">
+                            Críticas
+                          </h4>
+                          
+                          {reviewsLoading ? (
+                            <div className="text-center py-4">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                            </div>
+                          ) : reviews.length > 0 ? (
+                            <div className="space-y-4">
+                              {reviews.map((review: Review) => (
+                                <div key={review.id} className="bg-gray-50 p-4 rounded-lg">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <div className="flex items-center space-x-2">
+                                      <h5 className="font-medium text-gray-900">
+                                        {review.reviewerName}
+                                      </h5>
+                                      {review.rating && (
+                                        <div className="flex items-center">
+                                          {[...Array(5)].map((_, i) => (
+                                            <Star
+                                              key={i}
+                                              size={14}
+                                              className={`${
+                                                i < review.rating!
+                                                  ? 'text-yellow-400 fill-current'
+                                                  : 'text-gray-300'
+                                              }`}
+                                            />
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      {new Date(review.createdAt).toLocaleDateString('pt-PT')}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-start space-x-2">
+                                    <Quote className="text-primary mt-1 flex-shrink-0" size={16} />
+                                    <p className="text-gray-700 italic">
+                                      {review.reviewText}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 text-gray-500">
+                              <Quote className="mx-auto mb-3 text-gray-300" size={48} />
+                              <p>Ainda não há críticas para este álbum.</p>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    )}
                   </Card>
                 </motion.div>
               ))}
