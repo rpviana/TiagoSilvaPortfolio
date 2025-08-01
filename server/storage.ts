@@ -11,7 +11,7 @@ import {
   users, messages, events, repertoire,
   languages, eventTranslations, 
   repertoireCategories, repertoireCategoryTranslations, 
-  repertoireTranslations
+  repertoireTranslations, discography, discographyReviews
 } from "@shared/schema";
 
 import { db } from "./db";
@@ -442,6 +442,36 @@ export class DatabaseStorage implements IStorage {
       translations: insertedTranslations,
       category
     };
+  }
+
+  // Discography methods
+  async getDiscographyItems(): Promise<any[]> {
+    const items = await db.select().from(discography);
+    return items;
+  }
+
+  async getDiscographyReviews(discographyId: number): Promise<any[]> {
+    const reviews = await db
+      .select({
+        id: discographyReviews.id,
+        reviewerName: discographyReviews.reviewerName,
+        reviewText: discographyReviews.reviewText,
+        rating: discographyReviews.rating,
+        createdAt: discographyReviews.createdAt
+      })
+      .from(discographyReviews)
+      .where(eq(discographyReviews.discographyId, discographyId))
+      .orderBy(desc(discographyReviews.createdAt));
+    
+    return reviews;
+  }
+
+  async createDiscographyReview(reviewData: any): Promise<any> {
+    const [newReview] = await db
+      .insert(discographyReviews)
+      .values(reviewData)
+      .returning();
+    return newReview;
   }
 }
 

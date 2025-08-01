@@ -222,3 +222,67 @@ export type Repertoire = typeof repertoire.$inferSelect;
 
 export type InsertRepertoireTranslation = z.infer<typeof insertRepertoireTranslationSchema>;
 export type RepertoireTranslation = typeof repertoireTranslations.$inferSelect;
+
+// Discography schema
+export const discography = pgTable("discography", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  year: integer("year").notNull(),
+  label: text("label"),
+  coverImage: text("cover_image"),
+  spotifyUrl: text("spotify_url"),
+  appleMusicUrl: text("apple_music_url"),
+  amazonUrl: text("amazon_url"),
+});
+
+export const insertDiscographySchema = createInsertSchema(discography).pick({
+  title: true,
+  year: true,
+  label: true,
+  coverImage: true,
+  spotifyUrl: true,
+  appleMusicUrl: true,
+  amazonUrl: true,
+});
+
+// Reviews/Critics schema for discography
+export const discographyReviews = pgTable("discography_reviews", {
+  id: serial("id").primaryKey(),
+  discographyId: integer("discography_id").notNull().references(() => discography.id, { onDelete: "cascade" }),
+  reviewerName: text("reviewer_name").notNull(),
+  reviewerNif: text("reviewer_nif").notNull(), // NIF para evitar múltiplas críticas da mesma pessoa
+  reviewText: text("review_text").notNull(),
+  rating: integer("rating"), // opcional, de 1 a 5 estrelas
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => {
+  return {
+    uniqueNifPerDiscography: unique().on(table.discographyId, table.reviewerNif),
+  }
+});
+
+export const insertDiscographyReviewSchema = createInsertSchema(discographyReviews).pick({
+  discographyId: true,
+  reviewerName: true,
+  reviewerNif: true,
+  reviewText: true,
+  rating: true,
+});
+
+// Relações para discografia
+export const discographyRelations = relations(discography, ({ many }) => ({
+  reviews: many(discographyReviews),
+}));
+
+// Relações para críticas
+export const discographyReviewsRelations = relations(discographyReviews, ({ one }) => ({
+  discography: one(discography, {
+    fields: [discographyReviews.discographyId],
+    references: [discography.id]
+  })
+}));
+
+export type InsertDiscography = z.infer<typeof insertDiscographySchema>;
+export type Discography = typeof discography.$inferSelect;
+
+export type InsertDiscographyReview = z.infer<typeof insertDiscographyReviewSchema>;
+export type DiscographyReview = typeof discographyReviews.$inferSelect;

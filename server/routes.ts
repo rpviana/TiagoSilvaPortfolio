@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertMessageSchema, insertLanguageSchema, insertEventTranslationSchema } from "@shared/schema";
+import { insertMessageSchema, insertLanguageSchema, insertEventTranslationSchema, insertDiscographyReviewSchema } from "@shared/schema";
 import nodemailer from 'nodemailer';
 import path from 'path';
 
@@ -188,6 +188,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Invalid form data', 
         error: error.message 
       });
+    }
+  });
+
+  // Discography routes
+  app.get('/api/discography', async (req: Request, res: Response) => {
+    try {
+      const discographyItems = await storage.getDiscographyItems();
+      res.json(discographyItems);
+    } catch (error) {
+      console.error('Error fetching discography:', error);
+      res.status(500).json({ error: 'Failed to fetch discography' });
+    }
+  });
+
+  app.get('/api/discography/:id/reviews', async (req: Request, res: Response) => {
+    try {
+      const discographyId = parseInt(req.params.id);
+      if (isNaN(discographyId)) {
+        return res.status(400).json({ error: 'Invalid discography ID' });
+      }
+      
+      const reviews = await storage.getDiscographyReviews(discographyId);
+      res.json(reviews);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+      res.status(500).json({ error: 'Failed to fetch reviews' });
+    }
+  });
+
+  app.post('/api/discography/reviews', async (req: Request, res: Response) => {
+    try {
+      const reviewData = insertDiscographyReviewSchema.parse(req.body);
+      const review = await storage.createDiscographyReview(reviewData);
+      res.status(201).json(review);
+    } catch (error: any) {
+      console.error('Error creating review:', error);
+      if (error.message?.includes('duplicate') || error.code === '23505') {
+        res.status(409).json({ error: 'Já existe uma crítica sua para este álbum' });
+      } else {
+        res.status(400).json({ error: 'Invalid review data' });
+      }
     }
   });
 
