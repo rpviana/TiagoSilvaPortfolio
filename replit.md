@@ -6,6 +6,26 @@ This is a multilingual artist portfolio website for Tiago Soares Silva, a profes
 
 Preferred communication style: Simple, everyday language.
 
+# Recent Changes
+
+## Authentication System (January 2025)
+- Implemented simple prompt-based login system with hardcoded credentials
+- Username: TiagoSilva, Password: portfolio
+- Authentication state saved in localStorage for persistence
+- Admin panel accessible at /admin with comprehensive content management interface
+- User requested functional admin panel for complete content control without coding
+
+## Admin Panel Features
+- Biography & About section management
+- Events & Concerts management
+- Photo gallery management
+- Discography & Audio management
+- Reviews & Testimonials management
+- Contact messages viewing
+- General site settings
+- Translation management (Portuguese/English)
+- Site statistics and reporting
+
 # System Architecture
 
 ## Frontend Architecture
