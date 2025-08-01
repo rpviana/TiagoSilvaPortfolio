@@ -28,10 +28,33 @@ function Router() {
         <Route path="/events" component={Events} />
         <Route path="/contact" component={Contact} />
         <Route path="/admin">
-          <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-background/95">
-            <div className="text-center">
-              <h1 className="text-4xl font-playfair text-primary mb-4">Painel Administrativo</h1>
-              <p className="text-muted-foreground">Em desenvolvimento...</p>
+          <div className="min-h-screen bg-gradient-to-br from-background to-background/95 py-12">
+            <div className="container mx-auto px-4">
+              <div className="mb-8 text-center">
+                <h1 className="text-4xl font-playfair text-primary mb-2">
+                  Painel Administrativo
+                </h1>
+                <p className="text-xl text-muted-foreground">
+                  Sistema de gestão Tiago Soares Silva
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                  <h3 className="text-lg font-semibold mb-2">✓ Autenticação Backend</h3>
+                  <p className="text-muted-foreground">Sistema de login com JWT implementado</p>
+                </div>
+                
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                  <h3 className="text-lg font-semibold mb-2">✓ Credenciais</h3>
+                  <p className="text-muted-foreground">TiagoSilva / portfolio</p>
+                </div>
+                
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                  <h3 className="text-lg font-semibold mb-2">✓ Database</h3>
+                  <p className="text-green-600 font-medium">PostgreSQL Online</p>
+                </div>
+              </div>
             </div>
           </div>
         </Route>

@@ -14,10 +14,39 @@ const Header = () => {
   const [showLogin, setShowLogin] = useState(false);
   const { t } = useTranslation();
   const [location] = useLocation();
-  // const { user, isAuthenticated, logout } = useAuth();
-  const user = null;
-  const isAuthenticated = false;
-  const logout = () => {};
+  // Temporary hardcoded admin state for demo
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  
+  const handleLogin = () => {
+    const username = prompt('Username:');
+    const password = prompt('Password:');
+    
+    if (username === 'TiagoSilva' && password === 'portfolio') {
+      setIsAuthenticated(true);
+      setUser({ username: 'TiagoSilva', firstName: 'Tiago', isAdmin: true });
+      localStorage.setItem('isLoggedIn', 'true');
+      alert('Login realizado com sucesso!');
+    } else {
+      alert('Credenciais inválidas');
+    }
+  };
+  
+  const logout = () => {
+    setIsAuthenticated(false);
+    setUser(null);
+    localStorage.removeItem('isLoggedIn');
+    alert('Logout realizado');
+  };
+  
+  // Check localStorage on component mount
+  useEffect(() => {
+    const loggedIn = localStorage.getItem('isLoggedIn');
+    if (loggedIn === 'true') {
+      setIsAuthenticated(true);
+      setUser({ username: 'TiagoSilva', firstName: 'Tiago', isAdmin: true });
+    }
+  }, []);
   
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
@@ -93,7 +122,7 @@ const Header = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowLogin(true)}
+                onClick={handleLogin}
                 className="text-foreground/80 hover:text-primary"
               >
                 <Settings size={16} className="mr-1" />
@@ -170,7 +199,7 @@ const Header = () => {
                       size="sm"
                       onClick={() => {
                         closeMenu();
-                        setShowLogin(true);
+                        handleLogin();
                       }}
                       className="text-primary"
                     >
@@ -185,12 +214,12 @@ const Header = () => {
         )}
       </AnimatePresence>
       
-      {/* Login Modal - Temporarily disabled */}
-      {/* <AnimatePresence>
+      {/* Login Modal */}
+      <AnimatePresence>
         {showLogin && (
           <AdminLogin onClose={() => setShowLogin(false)} />
         )}
-      </AnimatePresence> */}
+      </AnimatePresence>
     </header>
   );
 };
