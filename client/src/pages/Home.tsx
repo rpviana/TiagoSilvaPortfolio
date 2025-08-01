@@ -13,7 +13,7 @@ const Home = () => {
         {/* Background Image */}
         <div className="absolute inset-0 opacity-70">
           <img
-            src="/attached_assets/Tiago-Violino-100.JPG"
+            src="/attached_assets/Tiago-Violino-87.JPG"
             alt="Tiago Soares Silva Violin Performance"
             className="object-cover w-full h-full"
           />

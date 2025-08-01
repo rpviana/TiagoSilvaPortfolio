@@ -16,15 +16,15 @@ const LanguageSwitcher = ({ className = '' }: LanguageSwitcherProps) => {
       <div className="flex items-center space-x-4">
         <button 
           onClick={() => switchLanguage('en')}
-          className={`${language === 'en' ? 'text-primary font-medium' : 'text-gray-400 hover:text-primary'} transition-colors`}
+          className={`${language === 'en' ? 'text-black font-medium' : 'text-black/70 hover:text-black'} transition-colors`}
           aria-label="Switch to English"
         >
           EN
         </button>
-        <span className="text-gray-400">|</span>
+        <span className="text-black/70">|</span>
         <button 
           onClick={() => switchLanguage('pt')}
-          className={`${language === 'pt' ? 'text-primary font-medium' : 'text-gray-400 hover:text-primary'} transition-colors`}
+          className={`${language === 'pt' ? 'text-black font-medium' : 'text-black/70 hover:text-black'} transition-colors`}
           aria-label="Mudar para Português"
         >
           PT
