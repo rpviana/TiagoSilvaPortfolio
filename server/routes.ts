@@ -4,8 +4,12 @@ import { storage } from "./storage";
 import { insertMessageSchema, insertLanguageSchema, insertEventTranslationSchema, insertDiscographyReviewSchema } from "@shared/schema";
 import nodemailer from 'nodemailer';
 import path from 'path';
+import express from 'express';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve static assets from attached_assets directory
+  app.use('/attached_assets', express.static(path.resolve(import.meta.dirname, '..', 'attached_assets')));
+  
   // API routes
 
   // Language routes
