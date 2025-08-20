@@ -32,11 +32,11 @@ const Gallery = () => {
       alt: "img6"
     },
     {
-      src: "/attached_assets/FB_IMG_1729796581756.JPG",
+      src: "/attached_assets/Tiago-Violino-1.JPG",
       alt: "img7"
     },
     {
-      src: "/attached_assets/FB_IMG_1729796535466.JPG",
+      src: "/attached_assets/Tiago-Violino-2.JPG",
       alt: "img8"
     }
   ];
