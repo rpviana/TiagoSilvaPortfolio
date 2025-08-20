@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
 import { ExternalLink, Play, Pause, Star, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,20 +15,46 @@ interface DiscographyItem {
   spotifyUrl?: string;
   appleMusicUrl?: string;
   amazonUrl?: string;
+  previewAudio?: string; // Caminho para o mp3 de preview
+  buyUrl?: string; // Novo campo para URL de compra
 }
 
 interface Review {
-  id: number;
-  reviewerName: string;
-  reviewText: string;
+  author: string;
+  source?: string;
+  text: string;
+  links?: string[];
   rating?: number;
-  createdAt: string;
+  createdAt?: string;
 }
 
 const Discography = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [playingUrl, setPlayingUrl] = useState<string | null>(null);
   const [selectedAlbum, setSelectedAlbum] = useState<number | null>(null);
+  const audioRefs = useRef<Record<number, HTMLAudioElement | null>>({});
+
+  useEffect(() => {
+    // Pausa todos os áudios quando playingUrl muda
+    Object.entries(audioRefs.current).forEach(([id, audio]) => {
+      if (audio) {
+        if (playingUrl === id) {
+          audio.currentTime = 0;
+          audio.play();
+        } else {
+          audio.pause();
+          audio.currentTime = 0;
+        }
+      }
+    });
+  }, [playingUrl]);
+
+  // Função para buscar reviews do i18n
+  const getReviewsForAlbum = (albumId: number): Review[] => {
+    // Espera que as reviews estejam em t('discography.reviews', { returnObjects: true })
+    const allReviews = t('discography.reviews', { returnObjects: true }) as Record<string, Review[]>;
+    return allReviews?.[albumId] || [];
+  };
 
   // Mock data for albums (será substituído por dados do banco depois)
   const albums: DiscographyItem[] = [
@@ -38,39 +63,32 @@ const Discography = () => {
       title: "Brett Dean: Eclipse (String Quartet No. 1)",
       label: "Luminate Records",
       year: 2023,
-      coverImage: "https://images.unsplash.com/photo-1507838153414-b4b713384a76?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&q=80",
-      spotifyUrl: "https://open.spotify.com/album/example",
-      appleMusicUrl: "https://music.apple.com/album/example",
-      amazonUrl: "https://amazon.com/music/album/example"
+      coverImage: "/attached_assets/cd1.jpg",
+      spotifyUrl: "https://open.spotify.com/intl-pt/album/4fLowG006afbep3rx8zEdB?si=_MS7mgxxRWWcRWuzSYBU8A",
+      appleMusicUrl: "https://music.apple.com/pt/album/brett-dean-string-quartet-no-1-eclipse-single/1782316937",
+      amazonUrl: "https://music.amazon.com/albums/B0DP7HY2BM",
+      previewAudio: "/attached_assets/preview1.mp3",
+      buyUrl: "https://luminaterecords.com/product/brett-dean-eclipse-string-quartet-no-1/" // atualizado
     },
     {
       id: 2,
       title: "Justin Connolly: Music for Strings (plus...)",
       label: "Divine Art Records",
       year: 2022,
-      coverImage: "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&q=80",
-      spotifyUrl: "https://open.spotify.com/album/example2",
-      appleMusicUrl: "https://music.apple.com/album/example2",
+      coverImage: "/attached_assets/cd2.jpg",
+      spotifyUrl: "https://open.spotify.com/intl-pt/album/6671lkoxgRsWZyXiiR9uJt?si=HCEGEELlTrq9nBheOlbCcg",
+      appleMusicUrl: "https://music.apple.com/us/album/connolly-music-for-strings/1793073572",
+      amazonUrl: "https://music.amazon.com/albums/B0DZVX8S71",
+      previewAudio: "/attached_assets/preview2.mp3",
+      buyUrl: "https://divineartrecords.com/recording/justin-connolly-music-for-strings-plus/" // atualizado
     }
   ];
 
-  // Query para buscar reviews de um álbum específico
-  const { data: reviews = [], isLoading: reviewsLoading } = useQuery({
-    queryKey: ['discography-reviews', selectedAlbum, t.language],
-    queryFn: async () => {
-      if (!selectedAlbum) return [];
-      const response = await fetch(`/api/discography/${selectedAlbum}/reviews?lang=${t.language || 'pt'}`);
-      if (!response.ok) throw new Error('Failed to fetch reviews');
-      return response.json();
-    },
-    enabled: !!selectedAlbum
-  });
-
-  const handlePlayPause = (url: string) => {
-    if (playingUrl === url) {
+  const handlePlayPause = (albumId: number) => {
+    if (playingUrl === String(albumId)) {
       setPlayingUrl(null);
     } else {
-      setPlayingUrl(url);
+      setPlayingUrl(String(albumId));
     }
   };
 
@@ -104,14 +122,25 @@ const Discography = () => {
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <Button
-                          size="lg"
-                          className="bg-white/20 backdrop-blur-sm hover:bg-white/30"
-                          onClick={() => handlePlayPause(album.title)}
-                        >
-                          {playingUrl === album.title ? <Pause className="mr-2" size={20} /> : <Play className="mr-2" size={20} />}
-                          {playingUrl === album.title ? t('discography.pausePreview') : t('discography.playPreview')}
-                        </Button>
+                        {album.previewAudio && (
+                          <Button
+                            size="lg"
+                            className="bg-white/20 backdrop-blur-sm hover:bg-white/30"
+                            onClick={() => handlePlayPause(album.id)}
+                          >
+                            {playingUrl === String(album.id) ? <Pause className="mr-2" size={20} /> : <Play className="mr-2" size={20} />}
+                            {playingUrl === String(album.id) ? t('discography.pausePreview') : t('discography.playPreview')}
+                          </Button>
+                        )}
+                        {/* Elemento de áudio oculto */}
+                        {album.previewAudio && (
+                          <audio
+                            ref={el => { audioRefs.current[album.id] = el; }}
+                            src={album.previewAudio}
+                            style={{ display: 'none' }}
+                            onEnded={() => setPlayingUrl(null)}
+                          />
+                        )}
                       </div>
                     </div>
                     
@@ -153,8 +182,8 @@ const Discography = () => {
                         )}
                       </div>
 
-                      {/* Reviews Button */}
-                      <div className="mt-4 pt-4 border-t">
+                      {/* Reviews Button + Buy Now */}
+                      <div className="mt-4 pt-4 border-t flex items-center justify-between">
                         <Button
                           variant="ghost"
                           className="text-primary hover:text-primary-dark"
@@ -162,6 +191,22 @@ const Discography = () => {
                         >
                           {selectedAlbum === album.id ? t('discography.hideReviews') : t('discography.showReviews')}
                         </Button>
+                        {album.buyUrl && (
+                          <Button
+                            asChild
+                            size="sm"
+                            className="ml-2"
+                            variant="default"
+                          >
+                            <a
+                              href={album.buyUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {t('discography.buyNow')}
+                            </a>
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
 
@@ -172,45 +217,69 @@ const Discography = () => {
                           <h4 className="font-playfair text-lg font-bold mb-4 text-primary">
                             {t('discography.reviewsTitle')}
                           </h4>
-                          
-                          {reviewsLoading ? (
-                            <div className="text-center py-4">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                            </div>
-                          ) : reviews.length > 0 ? (
+                          {getReviewsForAlbum(album.id).length > 0 ? (
                             <div className="space-y-4">
-                              {reviews.map((review: Review) => (
-                                <div key={review.id} className="bg-gray-50 p-4 rounded-lg">
+                              {getReviewsForAlbum(album.id).map((review: Review, idx: number) => (
+                                <div key={idx} className="bg-gray-50 p-4 rounded-lg">
                                   <div className="flex items-start justify-between mb-2">
-                                    <div className="flex items-center space-x-2">
+                                    <div>
                                       <h5 className="font-medium text-gray-900">
-                                        {review.reviewerName}
+                                        {review.author}
                                       </h5>
-                                      {review.rating && (
-                                        <div className="flex items-center">
-                                          {[...Array(5)].map((_, i) => (
-                                            <Star
+                                      {review.source && (
+                                        <span className="text-xs text-gray-500 block">
+                                          {review.source}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {/* Se rating existir, mostrar estrelas */}
+                                    {review.rating && (
+                                      <div className="flex items-center">
+                                        {[...Array(5)].map((_, i) => (
+                                          <Star
+                                            key={i}
+                                            size={14}
+                                            className={`${
+                                              i < review.rating!
+                                                ? 'text-yellow-400 fill-current'
+                                                : 'text-gray-300'
+                                            }`}
+                                          />
+                                        ))}
+                                      </div>
+                                    )}
+                                    {/* Só mostra a data se existir e for válida */}
+                                    {/* 
+                                    {review.createdAt && !isNaN(Date.parse(review.createdAt)) && (
+                                      <div className="text-sm text-gray-500">
+                                        {new Date(review.createdAt).toLocaleDateString('pt-PT')}
+                                      </div>
+                                    )} 
+                                    */}
+                                  </div>
+                                  <div className="flex items-start space-x-2">
+                                    <Quote className="text-primary mt-1 flex-shrink-0" size={16} />
+                                    <div>
+                                      <p className="text-gray-700 italic">
+                                        {review.text}
+                                      </p>
+                                      {review.links && review.links.length > 0 && (
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                          {review.links.map((link, i) => (
+                                            <a
                                               key={i}
-                                              size={14}
-                                              className={`${
-                                                i < review.rating!
-                                                  ? 'text-yellow-400 fill-current'
-                                                  : 'text-gray-300'
-                                              }`}
-                                            />
+                                              href={link}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-blue-600 underline text-xs flex items-center"
+                                            >
+                                              <ExternalLink size={12} className="mr-1" />
+                                              {t('discography.officialSite')}
+                                            </a>
                                           ))}
                                         </div>
                                       )}
                                     </div>
-                                    <div className="text-sm text-gray-500">
-                                      {new Date(review.createdAt).toLocaleDateString('pt-PT')}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-start space-x-2">
-                                    <Quote className="text-primary mt-1 flex-shrink-0" size={16} />
-                                    <p className="text-gray-700 italic">
-                                      {review.reviewText}
-                                    </p>
                                   </div>
                                 </div>
                               ))}

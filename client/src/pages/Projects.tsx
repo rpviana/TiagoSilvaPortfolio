@@ -1,10 +1,10 @@
+import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import ProjectCard from '../components/ProjectCard';
-import { motion } from 'framer-motion';
 
 const Projects = () => {
-  const { t } = useTranslation();
-  
+  const { t, i18n } = useTranslation();
+
   // Project data
   const projects = [
     {
@@ -12,8 +12,8 @@ const Projects = () => {
       description: t('projects.97ensemble.description'),
       imageUrl: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
       links: [
-        { type: "website", url: "https://97ensemble.com/" },
-        { type: "instagram", url: "https://www.instagram.com/97ensemble/" }
+        { type: "website" as const, url: "https://97ensemble.com/" },
+        { type: "instagram" as const, url: "https://www.instagram.com/97ensemble/" }
       ]
     },
     {
@@ -21,7 +21,7 @@ const Projects = () => {
       description: t('projects.constelacao15.description'),
       imageUrl: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
       links: [
-        { type: "website", url: "https://www.constellation15.co.uk/" }
+        { type: "website" as const, url: "https://www.constellation15.co.uk/" }
       ]
     },
     {
@@ -29,12 +29,22 @@ const Projects = () => {
       description: t('projects.famart.description'),
       imageUrl: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1471&q=80",
       links: [
-        { type: "instagram", url: "https://www.instagram.com/famart.plataforma/" },
-        { type: "facebook", url: "https://www.facebook.com/share/19B77iPAWk/" }
+        { type: "instagram" as const, url: "https://www.instagram.com/famart.plataforma/" },
+        { type: "facebook" as const, url: "https://www.facebook.com/share/19B77iPAWk/" }
       ]
     }
   ];
-  
+
+  // Lógica para o ficheiro de repertório
+  const isPt = i18n.language === 'pt' || i18n.language?.toLowerCase().startsWith('pt');
+  const repertoireFile = isPt
+    ? '/RepertoireList_pt.pdf'
+    : '/RepertoireList_en.pdf';
+  const repertoireTitle = t('projects.repertoire') || (isPt ? "Repertório" : "Repertoire");
+  const repertoireLabel = isPt
+    ? "Baixar Repertório (PDF)"
+    : "Download Repertoire (PDF)";
+
   return (
     <div className="pt-24">
       <section className="py-16 md:py-24 bg-white">
@@ -101,6 +111,21 @@ const Projects = () => {
                 </div>
               </div>
             </motion.div>
+            
+            {/* Repertório Download - agora no fundo */}
+            <div className="flex flex-col items-center mt-20">
+              <h2 className="text-2xl font-playfair font-semibold text-purple mb-4">
+                {repertoireTitle}
+              </h2>
+              <a
+                href={repertoireFile}
+                download
+                className="inline-flex items-center justify-center w-full bg-white border border-primary text-primary hover:bg-primary hover:text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg transition-colors duration-200"
+              >
+                <i className="fas fa-download mr-2"></i>
+                {repertoireLabel}
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -109,3 +134,4 @@ const Projects = () => {
 };
 
 export default Projects;
+

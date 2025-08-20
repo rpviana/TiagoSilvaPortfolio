@@ -9,27 +9,35 @@ const Gallery = () => {
   const images = [
     {
       src: "/attached_assets/Tiago-Violino-52.JPG",
-      alt: "Tiago Soares Silva portrait with violin"
+      alt: "img1"
     },
     {
       src: "/attached_assets/Tiago-Violino-54.JPG",
-      alt: "Tiago Soares Silva with violin"
+      alt: "img2"
     },
     {
       src: "/attached_assets/Tiago-Violino-68.JPG",
-      alt: "Black and white portrait of Tiago Soares Silva performing"
+      alt: "img3"
     },
     {
       src: "/attached_assets/Tiago-Violino-87.JPG",
-      alt: "Tiago Soares Silva performing"
-    },
-    {
-      src: "/attached_assets/Tiago-Violino-99.JPG",
-      alt: "Outdoor portrait of Tiago Soares Silva with violin"
+      alt: "img4"
     },
     {
       src: "/attached_assets/Tiago-Violino-100.JPG",
-      alt: "Black and white outdoor portrait of Tiago Soares Silva with violin"
+      alt: "img5"
+    },
+    {
+      src: "/attached_assets/Tiago-Violino-36.JPG",
+      alt: "img6"
+    },
+    {
+      src: "/attached_assets/FB_IMG_1729796581756.JPG",
+      alt: "img7"
+    },
+    {
+      src: "/attached_assets/FB_IMG_1729796535466.JPG",
+      alt: "img8"
     }
   ];
   
@@ -72,26 +80,73 @@ const Gallery = () => {
               </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="aspect-w-16 aspect-h-9">
-                  <iframe 
-                    className="w-full h-full rounded-lg shadow-lg"
-                    src="https://www.youtube.com/embed/videoseries?list=PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG" 
-                    title="YouTube video player" 
-                    frameBorder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
-                  ></iframe>
+                {/* Bartok 44 */}
+                <div className="flex flex-col bg-white rounded-lg shadow-lg overflow-hidden">
+                  <div className="aspect-w-16 aspect-h-9">
+                    <iframe 
+                      className="w-full h-full"
+                      src="https://www.youtube.com/embed/twONMNOCuyc"
+                      title={t('gallery.videosDetails.bartok44.title')}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-primary mb-2">{t('gallery.videosDetails.bartok44.title')}</h3>
+                    <p className="text-gray-600 whitespace-pre-line">{t('gallery.videosDetails.bartok44.description')}</p>
+                  </div>
                 </div>
-                
-                <div className="aspect-w-16 aspect-h-9">
-                  <iframe 
-                    className="w-full h-full rounded-lg shadow-lg"
-                    src="https://www.youtube.com/embed/videoseries?list=PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG" 
-                    title="YouTube video player" 
-                    frameBorder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
-                  ></iframe>
+                {/* Bartok 32 */}
+                <div className="flex flex-col bg-white rounded-lg shadow-lg overflow-hidden">
+                  <div className="aspect-w-16 aspect-h-9">
+                    <iframe 
+                      className="w-full h-full"
+                      src="https://www.youtube.com/embed/JZEUUuhajDk"
+                      title={t('gallery.videosDetails.bartok32.title')}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-primary mb-2">{t('gallery.videosDetails.bartok32.title')}</h3>
+                    <p className="text-gray-600 whitespace-pre-line">{t('gallery.videosDetails.bartok32.description')}</p>
+                  </div>
+                </div>
+                {/* Kurtag */}
+                <div className="flex flex-col bg-white rounded-lg shadow-lg overflow-hidden">
+                  <div className="aspect-w-16 aspect-h-9">
+                    <iframe 
+                      className="w-full h-full"
+                      src="https://www.youtube.com/embed/WwhcVKM-Ghs"
+                      title={t('gallery.videosDetails.kurtag.title')}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-primary mb-2">{t('gallery.videosDetails.kurtag.title')}</h3>
+                    <p className="text-gray-600 whitespace-pre-line">{t('gallery.videosDetails.kurtag.description')}</p>
+                  </div>
+                </div>
+                {/* Palazzo */}
+                <div className="flex flex-col bg-white rounded-lg shadow-lg overflow-hidden">
+                  <div className="aspect-w-16 aspect-h-9">
+                    <iframe 
+                      className="w-full h-full"
+                      src="https://www.youtube.com/embed/iMsOmzrZCRI"
+                      title={t('gallery.videosDetails.palazzo.title')}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-primary mb-2">{t('gallery.videosDetails.palazzo.title')}</h3>
+                    <p className="text-gray-600 whitespace-pre-line">{t('gallery.videosDetails.palazzo.description')}</p>
+                  </div>
                 </div>
               </div>
             </motion.div>

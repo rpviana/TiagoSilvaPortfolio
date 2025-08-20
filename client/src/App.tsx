@@ -1,6 +1,7 @@
 import { Switch, Route, useLocation } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { LanguageProvider } from "@/components/LanguageContext";
 // import { AuthProvider } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Layout from "./components/Layout";
@@ -178,12 +179,14 @@ function Router() {
 
 function App() {
   return (
-    <TooltipProvider>
-      <Toaster />
-      <Layout>
-        <Router />
-      </Layout>
-    </TooltipProvider>
+    <LanguageProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Layout>
+          <Router />
+        </Layout>
+      </TooltipProvider>
+    </LanguageProvider>
   );
 }
 

@@ -23,40 +23,60 @@ export default {
     upcomingEvents: 'Próximos Eventos',
   },
   
-  about: {
+ about: {
     title: 'Sobre',
     downloadCV: 'Baixar CV',
+    downloadBio: 'Baixar Bio (PDF)',
     shortBio: {
-      title: 'Biografia Breve',
-      paragraph1: 'O violinista Tiago Soares Silva é um intérprete versátil dedicado a apresentar tanto o repertório tradicional quanto a música contemporânea para plateias em todo o mundo. Sua visão artística combina excelência técnica com profunda expressão musical.',
-      paragraph2: 'Tiago é membro fundador de vários conjuntos inovadores, incluindo o 97 Ensemble e Constelação 15, onde explora novas possibilidades criativas e expressões musicais colaborativas.'
-    },
-    fullBio: {
-      title: 'Biografia Completa',
-      paragraph1: 'Tiago Soares Silva é um violinista português cujas apresentações são caracterizadas pela profundidade emocional, precisão técnica e interpretações ponderadas. Sua jornada artística começou em seu país natal, Portugal, antes de levá-lo a instituições de prestígio em toda a Europa, onde aprimorou sua técnica sob a orientação de professores e mentores renomados.',
-      paragraph2: 'Como solista, Tiago já se apresentou com orquestras em toda a Europa, apresentando um repertório diversificado que vai desde obras-primas barrocas até obras contemporâneas. Suas interpretações das Sonatas e Partitas Solo de Bach receberam particular aclamação crítica por sua clareza, expressividade e consciência histórica.',
-      paragraph3: 'Defensor apaixonado da música nova, Tiago colabora regularmente com compositores para estrear e gravar novas obras para violino. Ele encomendou várias peças que expandem as capacidades técnicas e expressivas do instrumento, enquanto se envolvem com linguagens e preocupações musicais contemporâneas.',
-      paragraph4: 'Além de sua carreira como intérprete, Tiago está comprometido com a educação musical e divulgação, oferecendo masterclasses e workshops que buscam inspirar a próxima geração de músicos e construir novos públicos para a música clássica e contemporânea.'
-    },
-    education: {
-      title: 'Educação',
-      item1: 'Royal Academy of Music, Londres - Mestrado em Música (Distinção)',
-      item2: 'Escola Superior de Música de Lisboa - Licenciatura em Música (Primeira Classe de Honras)',
-      item3: 'Masterclasses com Maxim Vengerov, Leonidas Kavakos e Midori'
-    },
-    awards: {
-      title: 'Prêmios e Reconhecimentos',
-      item1: 'Primeiro Prêmio, Concurso Internacional de Violino de Portugal (2019)',
-      item2: 'Prêmio Jovem Artista, Fundação de Música Clássica (2021)',
-      item3: 'Artista em Residência, Fundação Gulbenkian (2022-2023)'
-    }
+    title: 'Biografia Curta',
+    paragraph1: 'Artista Futuro do Southbank Centre e Britten Pears Young Artist, Tiago Soares Silva apresentou-se recentemente em salas como Wigmore Hall, Queens Hall Edinburgh, Southbank Centre, Stamford International Festival, Aldeburgh Festival, Lerici Music Festival, St. James’s Piccadilly, Petworth Chamber Music Festival, Linbury Theatre no Royal Opera House, Fidelio Café e Ferrandou Musique.',
+    paragraph2: 'É artista de gravação da Luminate Records, tendo lançado um EP do Quarteto de Cordas nº1 “Eclipse” de Brett Dean. Gravou também “Ceilidh” de Justin Connolly para a Divine Records, integrado num álbum duplo dedicado à música do compositor, aclamado por publicações como a Gramophone, a British Music Society e a Classical Music Daily.',
+    paragraph3: 'Tiago é membro fundador do 97 Ensemble, colaborando com organizações como a Amnistia Internacional e a Solace Women’s Aid. É igualmente Vice-Presidente da FAMART – Associação Cultural, que promove eventos culturais no norte rural de Portugal.',
+    paragraph4: 'É licenciado com distinção pelo Royal College of Music e antigo bolseiro de pós-graduação da Royal Academy of Music. Atualmente frequenta o Advanced Postgraduate Diploma no Royal Birmingham Conservatoire, sob orientação de Roman Mints e com o apoio da Headley Trust, tocando num violino Gioffredo Cappa de cerca de 1710, gentilmente cedido pela Royal Academy of Music.'
+  },
+
+  fullBio: {
+    title: 'Biografia Completa',
+    paragraph1: 'Artista Britten Pears Young Artist e Southbank Centre Future Artist, Tiago Soares Silva apresentou-se por toda a Europa como solista e músico de câmara. Entre as suas atuações recentes contam-se o Wigmore Hall, Queens’ Hall Edinburgh, Southbank Centre, Linbury Theatre no Royal Opera House, Aldeburgh Festival, Snape Maltings, Petworth Festival, Ferrandou Musique, Lerici Festival, Elgar Room e Fidelio Café.',
+    paragraph2: 'Lançou recentemente, com o Slate Quartet, um EP para a Luminate Records com o Quarteto de Cordas nº1 “Eclipse” de Brett Dean. Gravou também “Ceilidh” de Justin Connolly para quatro violinos, com membros do Kreutzer Quartet e Muriel Oberhofer, integrado num álbum duplo editado pela Divine Records, elogiado pela Gramophone, British Music Society e Classical Music Daily.',
+    paragraph3: 'Colaborou com artistas de renome internacional como James Ehnes, Jo Knight, Jack Liebeck, Merel Vercammen, Hee-Young Lim, Oliver Heath, Elliot Perks, Jordan Ashman e Elly Suh. Como intérprete de música contemporânea, estreou obras de Sarah Angliss, Erland Cooper, Sasha Scott, Marcello Palazzo, Philip Dutton, Rockey Sun Keting, Beatrice Ferreira e Marcus Rock.',
+    paragraph4: 'É membro fundador do Slate Quartet e do 97 Ensemble, este último dedicado à promoção do repertório de compositoras e à colaboração com instituições como a Amnistia Internacional e a Solace Women’s Aid. Tiago é também fundador e Vice-Presidente da FAMART – Associação Cultural, que leva eventos artísticos ao norte de Portugal, criando oportunidades para jovens músicos portugueses através de masterclasses, concertos, workshops, gravações profissionais e projetos comunitários como “Raízes”.',
+    paragraph5: 'Foi premiado em vários concursos e festivais nacionais e internacionais, entre eles o Concurso Internacional de Violino de Guimarães (2.º prémio), Concurso Internacional Paços Premium (2.º prémio), Prémio Luso-Galaico “Elisa de Sousa Pedroso” (1.º prémio), Concurso Nacional Vasco Barbosa (3.º prémio), Classical Summer Festival Lisboa (2.º prémio) e o Festival Peter de Grote, Groningen (Prémio Honorário de Excelência Musical).',
+    paragraph6: 'No percurso académico, recebeu distinções como o Prémio de Excelência Santander Totta, o Prémio Doutora Manuela Carvalho, o Prémio da Fundação Padre Simão Rodrigues, o Help Musicians Postgraduate Award e o Stephen Bell Charitable Trust.',
+    paragraph7: 'Foi bolseiro de pós-graduação da Royal Academy of Music e licenciou-se com distinção pelo Royal College of Music. Atualmente frequenta o Advanced Postgraduate Diploma no Royal Birmingham Conservatoire, apoiado pela Headley Trust. Toca num violino Gioffredo Cappa de cerca de 1710 e um arco Hill, ambos gentilmente cedidos pela Royal Academy of Music.'
+  }
+    // education e awards removidos
   },
   
-  gallery: {
-    title: 'Galeria',
-    description: 'Explore uma coleção de fotografias profissionais capturando apresentações, sessões de gravação e imagens de retrato.',
-    videos: 'Vídeos de Apresentações'
+ gallery: {
+  title: 'Galeria',
+  description: 'Explore uma coleção de fotografias profissionais capturando apresentações, sessões de gravação e imagens de retrato.',
+  videos: 'Vídeos de Apresentações',
+  videosDetails: {
+    bartok44: {
+      title: 'B. Bartók – 44 Duos para 2 Violinos, Sz 98 – No. 44, "Dança da Transilvânia"',
+      description: `Localização: Antiga Igreja Matriz, Vila Nova de Famalicão
+Tiago Soares Silva – Violino
+Miguel Rocha - Violino`,
+    },
+    bartok32: {
+      title: 'B. Bartók – 44 Duos para 2 Violinos, Sz 98 – No. 32, "Dança de Maramureș"',
+      description: `Localização: Antiga Igreja Matriz, Vila Nova de Famalicão
+Tiago Soares Silva – Violino
+Miguel Rocha - Violino`,
+    },
+    kurtag: {
+      title: 'G. Kurtág – "Signs, Games and Messages" - In Nomine',
+      description: `Localização: Angela Burgess Recital Hall, Royal Academy of Music, Reino Unido
+Tiago Soares Silva - Violino`,
+    },
+    palazzo: {
+      title: 'Marcello Palazzo – “Brindisi”',
+      description: `Localização: Festival de Aldeburgh, Reino Unido
+Britten Pears Young Artist Programme – Composition and Performance Course 2022/23`,
+    },
   },
+},
   
   discography: {
     title: 'Discografia',
@@ -69,8 +89,48 @@ export default {
     reviewsTitle: 'Críticas',
     noReviews: 'Ainda não há críticas para este álbum.',
     playPreview: 'Reproduzir Prévia',
-    pausePreview: 'Pausar Prévia'
-  },
+    pausePreview: 'Pausar Prévia',
+    buyNow: 'Comprar Álbum',
+    reviews: {
+    2: [
+      {
+        author: "Geoff Pearce",
+        source: "Classical Music Daily",
+        text: "Os intérpretes são maravilhosos e plenamente comprometidos com a visão do compositor... Uma homenagem notável.",
+        links: [
+          "https://www.classicalmusicdaily.com/2025/01/justin-connolly-music-for-strings-plus-info.htm",
+          "https://divineartrecords.com/review/justin-connolly-music-for-strings-classical-music-daily-review/"
+        ]
+      },
+      {
+        author: "Gary Higginson",
+        source: "British Music Society",
+        text: "Combinar a virtuosidade do Kreutzer Quartet com os excelentes talentos dos estudantes da Royal Academy é uma ideia fantástica, refletida nestas interpretações absolutamente brilhantes.",
+        links: [
+          "https://www.britishmusicsociety.co.uk/2025/03/justin-connolly-music-for-strings-plus/",
+          "https://divineartrecords.com/review/justin-connolly-music-for-strings-plus-bms-review/"
+        ]
+      },
+      {
+        author: "Fabrice Fitch",
+        source: "Gramophone",
+        text: "O empenho e dedicação nestas gravações são exatamente o que se espera destes intérpretes, mas também há momentos de brilho excecional... Anthony Gilbert escreveu há anos que a música de Connolly era, em grande parte, inacessível para os ouvintes... este álbum representa um passo notável para corrigir essa situação. Vale a pena ouvir.",
+        links: [
+          "https://divineartrecords.com/review/justin-connolly-music-for-strings-gramophone-review/"
+        ]
+      },
+      {
+        author: "Stuart Millson",
+        source: "Brazen Head",
+        text: "...o verdadeiro entusiasta da música contemporânea e da excelência sonora considerará a coleção de Justin Connolly uma audição indispensável.",
+        links: [
+          "https://divineartrecords.com/review/justin-connolly-string-music-brazen-head-review/"
+        ]
+      }
+    ]
+  }
+},
+  
   
   projects: {
     title: 'Projetos e Conjuntos',
@@ -84,6 +144,7 @@ export default {
     collaboration4: 'Programas Educacionais em Comunidades Rurais - Portugal (2018-Presente)',
     collaborativeWorkText1: 'Tiago participa ativamente em projetos interdisciplinares que ultrapassam os limites dos formatos tradicionais de concerto. Através de colaborações com artistas de diversas origens, ele explora novos contextos para experimentar música clássica e contemporânea.',
     collaborativeWorkText2: 'Essas parcerias levaram a performances inovadoras que combinam música com dança, artes visuais, tecnologia e elementos específicos do local, criando experiências imersivas para o público.',
+    repertoire: 'Repertório',
     
     '97ensemble': {
       shortDescription: 'Um conjunto de câmara de pensamento avançado dedicado a explorar conexões entre o repertório clássico e obras contemporâneas através de programação e apresentação inovadoras.',
