@@ -9,7 +9,7 @@ export default {
   },
   
   home: {
-    tagline: 'Violinist • Performer • Composer',
+    tagline: 'Violinist',
     cta: 'Book a Performance',
     aboutPreview: {
       paragraph1: 'Violinist Tiago Soares Silva is a versatile performer dedicated to presenting both traditional repertoire and contemporary music to audiences worldwide. His artistic vision combines technical excellence with profound musical expression.',

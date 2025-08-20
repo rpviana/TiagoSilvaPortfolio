@@ -9,7 +9,7 @@ export default {
   },
   
   home: {
-    tagline: 'Violinista • Intérprete • Compositor',
+    tagline: 'Violinista',
     cta: 'Agendar uma Apresentação',
     aboutPreview: {
       paragraph1: 'O violinista Tiago Soares Silva é um intérprete versátil dedicado a apresentar tanto o repertório tradicional quanto a música contemporânea para plateias em todo o mundo. Sua visão artística combina excelência técnica com profunda expressão musical.',
