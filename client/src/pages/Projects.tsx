@@ -8,7 +8,7 @@ const Projects = () => {
   // Project data
   const projects = [
     {
-      title: "97 Ensemble",
+      title: "9700 Ensemble",
       description: t('projects.97ensemble.description'),
       imageUrl: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
       links: [
