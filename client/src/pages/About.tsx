@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Download } from 'lucide-react';
 
-const DownloadBioButton = ({ bioFile, label }: { bioFile: string; label: string }) => (
+const DownloadBioButton = ({ bioFile, label }: { bioFile: string; label: string }) => ( 
   <a
     href={bioFile}
     download
