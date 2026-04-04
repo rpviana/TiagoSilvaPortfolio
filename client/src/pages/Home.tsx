@@ -1,10 +1,49 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useLanguageManager } from "@/hooks/useLanguageManager";
+import { useEffect } from "react";
 
 const Home = () => {
   const { t } = useTranslation();
+  const { isPt } = useLanguageManager();
+
+  const { data: content, isLoading } = useQuery({
+    queryKey: ['/api/site-content'],
+    queryFn: async () => {
+      const res = await fetch('/api/site-content');
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      const map: Record<string, any> = {};
+      data.forEach((item: any) => { map[item.key] = item });
+      return map;
+    },
+    staleTime: 0,
+    refetchOnMount: "always"
+  });
+
+  // Forçar refetch sempre que a página Home for montada
+  useEffect(() => {
+    import("@/lib/queryClient").then(({ queryClient }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/site-content"] });
+    });
+  }, []);
+
+  const getDynamicText = (key: string, fallback: string) => {
+    if (!content || !content[key]) return fallback;
+    return isPt ? content[key].valuePt : content[key].valueEn;
+  };
+
+  const getDynamicImage = (key: string, fallback: string) => {
+    if (!content || !content[key]) return fallback;
+    return content[key].valuePt || fallback; // Imagens usamos a prop valuePt como base
+  };
+
+  if (isLoading) {
+    return <div className="h-screen flex items-center justify-center bg-black"><Loader2 className="w-10 h-10 animate-spin text-white" /></div>;
+  }
 
   return (
     <>
@@ -13,7 +52,7 @@ const Home = () => {
         {/* Background Image */}
         <div className="absolute inset-0 opacity-70">
           <img
-            src="/attached_assets/Tiago-Violino-87.JPG"
+            src={getDynamicImage("home_hero_image", "/attached_assets/Tiago-Violino-87.JPG")}
             alt="Tiago Soares Silva Violin Performance"
             className="object-cover w-full h-full"
           />
@@ -26,21 +65,21 @@ const Home = () => {
         <div className="container mx-auto px-4 h-full flex items-end pb-28 md:pb-40 relative z-10">
           <div className="max-w-3xl text-white">
             <motion.h1
-              className="text-4xl md:text-6xl lg:text-7xl font-playfair font-bold mb-4"
+              className="text-4xl md:text-6xl lg:text-7xl font-playfair font-bold mb-4 whitespace-pre-line"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              Tiago Soares Silva
+              {getDynamicText("home_hero_title", "Tiago Soares Silva")}
             </motion.h1>
 
             <motion.p
-              className="text-xl md:text-2xl font-light opacity-90 mb-8"
+              className="text-xl md:text-2xl font-light opacity-90 mb-8 whitespace-pre-line"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              {t("home.tagline")}
+              {getDynamicText("home_hero_subtitle", t("home.tagline"))}
             </motion.p>
 
             <motion.div
@@ -66,9 +105,9 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center">
               <div>
                 <h2 className="section-title">{t("nav.about")}</h2>
-                <div className="space-y-4 text-gray-700">
-                  <p>{t("home.aboutPreview.paragraph1")}</p>
-                  <p>{t("home.aboutPreview.paragraph2")}</p>
+                <div className="space-y-4 text-gray-700 whitespace-pre-line">
+                  <p>{getDynamicText("home_about_p1", t("home.aboutPreview.paragraph1"))}</p>
+                  <p>{getDynamicText("home_about_p2", t("home.aboutPreview.paragraph2"))}</p>
                 </div>
 
                 <div className="mt-8 flex space-x-4">
@@ -84,14 +123,14 @@ const Home = () => {
 
               <div className="relative">
                 <img
-                  src="/attached_assets/Tiago-Violino-68.JPG"
+                  src={getDynamicImage("home_about_image", "/attached_assets/Tiago-Violino-68.JPG")}
                   alt="Tiago Soares Silva"
-                  className="w-full h-auto rounded-lg shadow-xl"
+                  className="w-full h-auto rounded-lg shadow-xl object-cover"
                 />
 
                 <div className="absolute -bottom-6 -right-6 bg-primary-light p-6 rounded-lg shadow-lg max-w-xs hidden md:block">
                   <p className="font-playfair italic text-primary">
-                    "{t("home.quote")}"
+                    "{getDynamicText("home_about_quote", t("home.quote"))}"
                   </p>
                 </div>
               </div>

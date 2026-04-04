@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { authenticateToken, requireAdmin, loginUser, AuthRequest } from "./auth";
-import { insertMessageSchema, insertLanguageSchema, insertEventTranslationSchema, insertDiscographyReviewSchema, loginSchema } from "@shared/schema";
+import { insertMessageSchema, insertLanguageSchema, insertEventTranslationSchema, insertDiscographyReviewSchema, loginSchema, insertSiteContentSchema } from "@shared/schema";
 import nodemailer from 'nodemailer';
 import path from 'path';
 import express from 'express';
@@ -14,8 +14,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   app.post('/api/auth/login', async (req: Request, res: Response) => {
     try {
-      const { username, password } = loginSchema.parse(req.body);
-      const result = await loginUser(username, password);
+      const { email, password } = loginSchema.parse(req.body);
+      const result = await loginUser(email, password);
       res.json(result);
     } catch (error: any) {
       console.error('Login error:', error);
@@ -31,7 +31,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({
         id: user.id,
-        username: user.username,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -53,6 +52,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching languages:', error);
       res.status(500).json({ message: 'Failed to fetch languages' });
+    }
+  });
+
+  // Site Content Routes
+  app.get('/api/site-content', async (req: Request, res: Response) => {
+    try {
+      const content = await storage.getAllSiteContent();
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.json(content);
+    } catch (error) {
+      console.error('Error fetching site content:', error);
+      res.status(500).json({ message: 'Failed to fetch site content' });
+    }
+  });
+
+  app.post('/api/site-content', authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      if (Array.isArray(req.body)) {
+        const results = await Promise.all(
+          req.body.map((item: any) => {
+            const contentData = insertSiteContentSchema.parse(item);
+            return storage.upsertSiteContent(contentData);
+          })
+        );
+        return res.json(results);
+      }
+      
+      const contentData = insertSiteContentSchema.parse(req.body);
+      const result = await storage.upsertSiteContent(contentData);
+      res.json(result);
+    } catch (error: any) {
+      console.log('Error updating site content data:', JSON.stringify(error));
+      res.status(400).json({ message: 'Invalid site content data', error: error?.message || 'Unknown error' });
     }
   });
 

@@ -10,10 +10,11 @@ import {
   RepertoireTranslation, InsertRepertoireTranslation,
   DiscographyReview, InsertDiscographyReview,
   DiscographyReviewTranslation, InsertDiscographyReviewTranslation,
+  SiteContent, InsertSiteContent,
   users, messages, events, repertoire,
   languages, eventTranslations, 
   repertoireCategories, repertoireCategoryTranslations, 
-  repertoireTranslations, discography, discographyReviews, discographyReviewTranslations
+  repertoireTranslations, discography, discographyReviews, discographyReviewTranslations, siteContent
 } from "@shared/schema";
 
 import { db } from "./db";
@@ -37,7 +38,7 @@ export interface RepertoireWithTranslations extends Repertoire {
 export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<InsertUser>): Promise<User>;
   
@@ -64,6 +65,11 @@ export interface IStorage {
   getRepertoire(categoryId?: number, languageCode?: string): Promise<RepertoireWithTranslations[]>;
   getRepertoireItem(id: number, languageCode?: string): Promise<RepertoireWithTranslations | undefined>;
   createRepertoire(item: InsertRepertoire, translations: InsertRepertoireTranslation[]): Promise<RepertoireWithTranslations>;
+  
+  // Site Content methods
+  getAllSiteContent(): Promise<SiteContent[]>;
+  getSiteContent(key: string): Promise<SiteContent | undefined>;
+  upsertSiteContent(content: InsertSiteContent): Promise<SiteContent>;
 }
 
 // Implementação do armazenamento usando banco de dados
@@ -74,8 +80,8 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user || undefined;
   }
 
@@ -491,6 +497,37 @@ export class DatabaseStorage implements IStorage {
       .values(reviewData)
       .returning();
     return newReview;
+  }
+
+  // ===== SITE CONTENT METHODS =====
+
+  async getAllSiteContent(): Promise<SiteContent[]> {
+    return await db.select().from(siteContent);
+  }
+
+  async getSiteContent(key: string): Promise<SiteContent | undefined> {
+    const [content] = await db.select().from(siteContent).where(eq(siteContent.key, key));
+    return content || undefined;
+  }
+
+  async upsertSiteContent(content: InsertSiteContent): Promise<SiteContent> {
+    const existing = await this.getSiteContent(content.key);
+    
+    if (existing) {
+      const [updated] = await db.update(siteContent)
+        .set({
+          valuePt: content.valuePt,
+          valueEn: content.valueEn,
+          type: content.type,
+          updatedAt: new Date()
+        })
+        .where(eq(siteContent.key, content.key))
+        .returning();
+      return updated;
+    } else {
+      const [inserted] = await db.insert(siteContent).values(content).returning();
+      return inserted;
+    }
   }
 }
 

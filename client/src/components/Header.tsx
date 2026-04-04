@@ -16,7 +16,7 @@ const Header = () => {
   const [location] = useLocation();
   // Temporary hardcoded admin state for demo
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
+const [user, setUser] = useState<{username: string, firstName: string, isAdmin: boolean} | null>(null);
   
   const handleLogin = () => {
     const username = prompt('Username:');
@@ -217,7 +217,7 @@ const Header = () => {
       {/* Login Modal */}
       <AnimatePresence>
         {showLogin && (
-          <AdminLogin onClose={() => setShowLogin(false)} />
+          <div /> /* AdminLogin onClose={() => setShowLogin(false)} /> */
         )}
       </AnimatePresence>
     </header>
