@@ -9,11 +9,7 @@ const adapter = new PrismaPg(pool)
 
 export default defineConfig({
   adapter,
-  migrate: {
-    datasources: {
-      db: {
-        url: connectionString,
-      },
-    },
+  datasources: {
+    db: connectionString,
   },
 })
