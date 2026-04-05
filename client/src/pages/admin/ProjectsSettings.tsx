@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tantml:invoke>
 <invoke name="Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,7 +142,7 @@ export default function ProjectsSettings() {
   });
 
   // Initialize siteContent from query data
-  useState(() => {
+  useEffect(() => {
     const contentMap: Record<string, SiteContent> = {};
     siteContentData.forEach(item => {
       contentMap[item.key] = item;
@@ -158,7 +158,7 @@ export default function ProjectsSettings() {
       }
     });
     setSiteContent(contentMap);
-  });
+  }, [siteContentData]);
 
   // Update site content mutation
   const updateContentMutation = useMutation({
@@ -412,7 +412,19 @@ export default function ProjectsSettings() {
     setNewProject({ ...newProject, links: updatedLinks });
   };
 
-  if (isLoading) {
+  const handleSaveContent = async () => {
+    const contentArray = Object.values(siteContent);
+    updateContentMutation.mutate(contentArray);
+  };
+
+  const handleContentChange = (key: string, field: 'valuePt' | 'valueEn', value: string) => {
+    setSiteContent(prev => ({
+      ...prev,
+      [key]: { ...prev[key], [field]: value }
+    }));
+  };
+
+  if (isLoading || isLoadingContent) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -426,20 +438,38 @@ export default function ProjectsSettings() {
         <div>
           <h1 className="text-3xl font-bold">Gestão de Projetos</h1>
           <p className="text-muted-foreground mt-2">
-            Adicione e edite os projetos do portfólio
+            Adicione e edite os projetos do portfólio e personalize a página
           </p>
         </div>
-        <Button
-          onClick={() => setShowPreview(!showPreview)}
-          variant="outline"
-          size="sm"
-        >
-          {showPreview ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
-          {showPreview ? "Ocultar" : "Mostrar"} Preview
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setShowPreview(!showPreview)}
+            variant="outline"
+            size="sm"
+          >
+            {showPreview ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
+            {showPreview ? "Ocultar" : "Mostrar"} Preview
+          </Button>
+          {activeTab === "styles" && (
+            <Button onClick={handleSaveContent} disabled={updateContentMutation.isPending} size="sm">
+              {updateContentMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+              Guardar Estilos
+            </Button>
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="projects">Projetos</TabsTrigger>
+          <TabsTrigger value="styles">
+            <Palette className="h-4 w-4 mr-2" />
+            Estilos e Conteúdo
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="projects" className="mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Form Section */}
         <div className="space-y-6">
           {/* Create/Edit Form */}
@@ -702,6 +732,217 @@ export default function ProjectsSettings() {
           </div>
         )}
       </div>
+        </TabsContent>
+
+        <TabsContent value="styles" className="mt-6">
+          <div className="bg-white p-6 rounded-lg shadow-sm border max-w-4xl">
+            <h2 className="text-xl font-semibold mb-6">Personalizar Página de Projetos</h2>
+            
+            <Tabs defaultValue="pt" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="pt">🇵🇹 Português</TabsTrigger>
+                <TabsTrigger value="en">🇬🇧 English</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="pt" className="space-y-6 mt-4">
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Título e Descrição</h3>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Título da Página</label>
+                    <Input
+                      value={siteContent['projects_title']?.valuePt || ''}
+                      onChange={(e) => handleContentChange('projects_title', 'valuePt', e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Descrição da Página</label>
+                    <Textarea
+                      value={siteContent['projects_description']?.valuePt || ''}
+                      onChange={(e) => handleContentChange('projects_description', 'valuePt', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Trabalho Colaborativo</h3>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Título da Secção</label>
+                    <Input
+                      value={siteContent['projects_collaborative_title']?.valuePt || ''}
+                      onChange={(e) => handleContentChange('projects_collaborative_title', 'valuePt', e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Texto 1</label>
+                    <Textarea
+                      value={siteContent['projects_collaborative_text1']?.valuePt || ''}
+                      onChange={(e) => handleContentChange('projects_collaborative_text1', 'valuePt', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Texto 2</label>
+                    <Textarea
+                      value={siteContent['projects_collaborative_text2']?.valuePt || ''}
+                      onChange={(e) => handleContentChange('projects_collaborative_text2', 'valuePt', e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Colaborações Passadas</h3>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Título</label>
+                    <Input
+                      value={siteContent['projects_past_collaborations_title']?.valuePt || ''}
+                      onChange={(e) => handleContentChange('projects_past_collaborations_title', 'valuePt', e.target.value)}
+                    />
+                  </div>
+
+                  {[1, 2, 3, 4].map(num => (
+                    <div key={num}>
+                      <label className="block text-sm font-medium mb-2">Colaboração {num}</label>
+                      <Input
+                        value={siteContent[`projects_collaboration${num}`]?.valuePt || ''}
+                        onChange={(e) => handleContentChange(`projects_collaboration${num}`, 'valuePt', e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Cores</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Cor de Fundo</label>
+                      <Input
+                        type="color"
+                        value={siteContent['projects_bg_color']?.valuePt || '#ffffff'}
+                        onChange={(e) => handleContentChange('projects_bg_color', 'valuePt', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Cor do Título</label>
+                      <Input
+                        type="color"
+                        value={siteContent['projects_title_color']?.valuePt || '#6B2D3A'}
+                        onChange={(e) => handleContentChange('projects_title_color', 'valuePt', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="en" className="space-y-6 mt-4">
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Title and Description</h3>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Page Title</label>
+                    <Input
+                      value={siteContent['projects_title']?.valueEn || ''}
+                      onChange={(e) => handleContentChange('projects_title', 'valueEn', e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Page Description</label>
+                    <Textarea
+                      value={siteContent['projects_description']?.valueEn || ''}
+                      onChange={(e) => handleContentChange('projects_description', 'valueEn', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Collaborative Work</h3>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Section Title</label>
+                    <Input
+                      value={siteContent['projects_collaborative_title']?.valueEn || ''}
+                      onChange={(e) => handleContentChange('projects_collaborative_title', 'valueEn', e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Text 1</label>
+                    <Textarea
+                      value={siteContent['projects_collaborative_text1']?.valueEn || ''}
+                      onChange={(e) => handleContentChange('projects_collaborative_text1', 'valueEn', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Text 2</label>
+                    <Textarea
+                      value={siteContent['projects_collaborative_text2']?.valueEn || ''}
+                      onChange={(e) => handleContentChange('projects_collaborative_text2', 'valueEn', e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Past Collaborations</h3>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Title</label>
+                    <Input
+                      value={siteContent['projects_past_collaborations_title']?.valueEn || ''}
+                      onChange={(e) => handleContentChange('projects_past_collaborations_title', 'valueEn', e.target.value)}
+                    />
+                  </div>
+
+                  {[1, 2, 3, 4].map(num => (
+                    <div key={num}>
+                      <label className="block text-sm font-medium mb-2">Collaboration {num}</label>
+                      <Input
+                        value={siteContent[`projects_collaboration${num}`]?.valueEn || ''}
+                        onChange={(e) => handleContentChange(`projects_collaboration${num}`, 'valueEn', e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Colors</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Background Color</label>
+                      <Input
+                        type="color"
+                        value={siteContent['projects_bg_color']?.valueEn || '#ffffff'}
+                        onChange={(e) => handleContentChange('projects_bg_color', 'valueEn', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Title Color</label>
+                      <Input
+                        type="color"
+                        value={siteContent['projects_title_color']?.valueEn || '#6B2D3A'}
+                        onChange={(e) => handleContentChange('projects_title_color', 'valueEn', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
