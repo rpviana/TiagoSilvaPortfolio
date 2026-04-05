@@ -21,6 +21,7 @@ import AdminHeaderSettings from "./pages/admin/HeaderSettings";
 import AdminFooterSettings from "./pages/admin/FooterSettings";
 import AdminAboutSettings from "./pages/admin/AboutSettings";
 import AdminEventsSettings from "./pages/admin/EventsSettings";
+import AdminProjectsSettings from "./pages/admin/ProjectsSettings";
 
 // import AdminPanel from "./pages/AdminPanel";
 import { AnimatePresence } from "framer-motion";
@@ -67,6 +68,11 @@ function Router() {
         <Route path="/admin/events" component={() => (
           <AdminLayout>
             <AdminEventsSettings />
+          </AdminLayout>
+        )} />
+        <Route path="/admin/projects" component={() => (
+          <AdminLayout>
+            <AdminProjectsSettings />
           </AdminLayout>
         )} />
         <Route component={NotFound} />

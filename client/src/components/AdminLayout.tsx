@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useEffect } from "react";
-import { Home, PanelTop, PanelBottom, Calendar, User, LayoutDashboard } from "lucide-react";
+import { Home, PanelTop, PanelBottom, Calendar, User, LayoutDashboard, Briefcase } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
@@ -24,6 +24,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/header", label: "Header", icon: PanelTop },
     { href: "/admin/footer", label: "Footer", icon: PanelBottom },
     { href: "/admin/events", label: "Eventos", icon: Calendar },
+    { href: "/admin/projects", label: "Projetos", icon: Briefcase },
   ];
 
   return (

@@ -228,6 +228,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Project routes
+  app.get('/api/projects', async (req: Request, res: Response) => {
+    try {
+      const languageCode = req.query.lang as string | undefined;
+      const projects = await storage.getProjects(languageCode);
+      res.json(projects);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      res.status(500).json({ message: 'Failed to fetch projects' });
+    }
+  });
+  
+  app.get('/api/projects/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const languageCode = req.query.lang as string | undefined;
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid project ID' });
+      }
+      
+      const project = await storage.getProject(id, languageCode);
+      
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      res.json(project);
+    } catch (error) {
+      console.error('Error fetching project:', error);
+      res.status(500).json({ message: 'Failed to fetch project' });
+    }
+  });
+  
+  // Admin: Create project
+  app.post('/api/projects', authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { project, translations, links } = req.body;
+      
+      if (!project || !translations || !Array.isArray(translations)) {
+        return res.status(400).json({ message: 'Project and translations are required' });
+      }
+      
+      const linksArray = Array.isArray(links) ? links : [];
+      const newProject = await storage.createProject(project, translations, linksArray);
+      res.status(201).json(newProject);
+    } catch (error: any) {
+      console.error('Error creating project:', error);
+      res.status(400).json({ message: 'Failed to create project', error: error?.message });
+    }
+  });
+  
+  // Admin: Update project
+  app.put('/api/projects/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid project ID' });
+      }
+      
+      const { project, translations, links } = req.body;
+      const updatedProject = await storage.updateProject(id, project, translations, links);
+      
+      if (!updatedProject) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      res.json(updatedProject);
+    } catch (error: any) {
+      console.error('Error updating project:', error);
+      res.status(400).json({ message: 'Failed to update project', error: error?.message });
+    }
+  });
+  
+  // Admin: Delete project
+  app.delete('/api/projects/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid project ID' });
+      }
+      
+      const deleted = await storage.deleteProject(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      res.json({ message: 'Project deleted successfully' });
+    } catch (error: any) {
+      console.error('Error deleting project:', error);
+      res.status(500).json({ message: 'Failed to delete project', error: error?.message });
+    }
+  });
+  
   // Repertoire category routes
   app.get('/api/repertoire/categories', async (req: Request, res: Response) => {
     try {

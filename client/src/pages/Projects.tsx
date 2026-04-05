@@ -1,39 +1,41 @@
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import ProjectCard from '../components/ProjectCard';
+import { Loader2 } from 'lucide-react';
+
+interface ProjectTranslation {
+  languageCode: string;
+  title: string;
+  description: string;
+}
+
+interface ProjectLink {
+  type: string;
+  url: string;
+}
+
+interface Project {
+  id: number;
+  imageUrl: string;
+  order: number;
+  translations: ProjectTranslation[];
+  links: ProjectLink[];
+}
 
 const Projects = () => {
   const { t, i18n } = useTranslation();
+  const currentLang = i18n.language === 'pt' || i18n.language?.toLowerCase().startsWith('pt') ? 'pt' : 'en';
 
-  // Project data
-  const projects = [
-    {
-      title: "97 Ensemble",
-      description: t('projects.97ensemble.description'),
-      imageUrl: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
-      links: [
-        { type: "website" as const, url: "https://97ensemble.com/" },
-        { type: "instagram" as const, url: "https://www.instagram.com/97ensemble/" }
-      ]
+  // Fetch projects from API
+  const { data: projects = [], isLoading } = useQuery<Project[]>({
+    queryKey: ['/api/projects', currentLang],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects?lang=${currentLang}`);
+      if (!response.ok) throw new Error('Failed to fetch projects');
+      return response.json();
     },
-    {
-      title: "Constelação 15",
-      description: t('projects.constelacao15.description'),
-      imageUrl: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
-      links: [
-        { type: "website" as const, url: "https://www.constellation15.co.uk/" }
-      ]
-    },
-    {
-      title: "FAMART",
-      description: t('projects.famart.description'),
-      imageUrl: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1471&q=80",
-      links: [
-        { type: "instagram" as const, url: "https://www.instagram.com/famart.plataforma/" },
-        { type: "facebook" as const, url: "https://www.facebook.com/share/19B77iPAWk/" }
-      ]
-    }
-  ];
+  });
 
   // Lógica para o ficheiro de repertório
   const isPt = i18n.language === 'pt' || i18n.language?.toLowerCase().startsWith('pt');
@@ -64,23 +66,36 @@ const Projects = () => {
               </p>
             </motion.div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {projects.map((project, index) => (
-                <motion.div 
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 + 0.2 }}
-                >
-                  <ProjectCard 
-                    title={project.title}
-                    description={project.description}
-                    imageUrl={project.imageUrl}
-                    links={project.links}
-                  />
-                </motion.div>
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {projects.map((project, index) => {
+                  const translation = project.translations.find(t => t.languageCode === currentLang) 
+                    || project.translations[0];
+                  
+                  if (!translation) return null;
+
+                  return (
+                    <motion.div 
+                      key={project.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 + 0.2 }}
+                    >
+                      <ProjectCard 
+                        title={translation.title}
+                        description={translation.description}
+                        imageUrl={project.imageUrl}
+                        links={project.links.map(link => ({ type: link.type as any, url: link.url }))}
+                      />
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
             
             {/* Collaborative Work */}
             <motion.div 
