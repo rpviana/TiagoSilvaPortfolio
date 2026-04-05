@@ -1,15 +1,43 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { useQuery, useMutation, useQueryClient } from "@tantml:invoke>
+<invoke name="Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Loader2, Save, Eye, EyeOff, Plus, Trash2, Edit2, 
-  Link as LinkIcon, ExternalLink, X, Image as ImageIcon, GripVertical
+  Link as LinkIcon, ExternalLink, X, Image as ImageIcon, GripVertical, Palette
 } from "lucide-react";
 import ProjectCard from "@/components/ProjectCard";
+
+type SiteContent = {
+  key: string;
+  valuePt: string;
+  valueEn: string;
+  type: string;
+};
+
+const DEFAULT_FIELDS = [
+  { key: "projects_title", label: "Título da Página", type: "text", defaultPt: "Projetos e Conjuntos", defaultEn: "Projects and Ensembles" },
+  { key: "projects_description", label: "Descrição da Página", type: "textarea", defaultPt: "Descubra os vários projetos artísticos e conjuntos nos quais Tiago está envolvido, desde grupos de câmara até colaborações interdisciplinares.", defaultEn: "Discover the various artistic projects and ensembles in which Tiago is involved, from chamber groups to interdisciplinary collaborations." },
+  { key: "projects_bg_color", label: "Cor de Fundo", type: "color", defaultPt: "#ffffff", defaultEn: "#ffffff" },
+  { key: "projects_title_color", label: "Cor do Título", type: "color", defaultPt: "#6B2D3A", defaultEn: "#6B2D3A" },
+  { key: "projects_card_bg_color", label: "Cor do Card", type: "color", defaultPt: "#ffffff", defaultEn: "#ffffff" },
+  { key: "projects_button_color", label: "Cor dos Botões", type: "color", defaultPt: "#6B2D3A", defaultEn: "#6B2D3A" },
+  { key: "projects_collaborative_title", label: "Título do Trabalho Colaborativo", type: "text", defaultPt: "Trabalho Colaborativo", defaultEn: "Collaborative Work" },
+  { key: "projects_collaborative_text1", label: "Texto Colaborativo 1", type: "textarea", defaultPt: "Tiago Silva está sempre aberto a novas colaborações e projetos musicais.", defaultEn: "Tiago Silva is always open to new collaborations and musical projects." },
+  { key: "projects_collaborative_text2", label: "Texto Colaborativo 2", type: "textarea", defaultPt: "Se está interessado em trabalhar com o Tiago, não hesite em contactá-lo.", defaultEn: "If you are interested in working with Tiago, please do not hesitate to contact him." },
+  { key: "projects_past_collaborations_title", label: "Título Colaborações Passadas", type: "text", defaultPt: "Colaborações Passadas", defaultEn: "Past Collaborations" },
+  { key: "projects_collaboration1", label: "Colaboração 1", type: "text", defaultPt: "Orquestra Sinfónica do Porto Casa da Música", defaultEn: "Porto Symphony Orchestra Casa da Música" },
+  { key: "projects_collaboration2", label: "Colaboração 2", type: "text", defaultPt: "Orquestra Clássica do Centro", defaultEn: "Classical Orchestra of the Centre" },
+  { key: "projects_collaboration3", label: "Colaboração 3", type: "text", defaultPt: "Ensemble de Câmara da ESMAE", defaultEn: "ESMAE Chamber Ensemble" },
+  { key: "projects_collaboration4", label: "Colaboração 4", type: "text", defaultPt: "Projetos interdisciplinares com dança contemporânea", defaultEn: "Interdisciplinary projects with contemporary dance" },
+  { key: "projects_repertoire_title", label: "Título do Repertório", type: "text", defaultPt: "Repertório", defaultEn: "Repertoire" },
+  { key: "projects_repertoire_button", label: "Texto do Botão", type: "text", defaultPt: "Baixar Repertório (PDF)", defaultEn: "Download Repertoire (PDF)" },
+  { key: "projects_repertoire_file_pt", label: "Ficheiro PT", type: "text", defaultPt: "/RepertoireList_pt.pdf", defaultEn: "/RepertoireList_pt.pdf" },
+  { key: "projects_repertoire_file_en", label: "Ficheiro EN", type: "text", defaultPt: "/RepertoireList_en.pdf", defaultEn: "/RepertoireList_en.pdf" },
+];
 
 interface ProjectTranslation {
   id?: number;
@@ -100,10 +128,69 @@ export default function ProjectsSettings() {
   const [newProject, setNewProject] = useState<NewProject>(DEFAULT_NEW_PROJECT);
   const [showPreview, setShowPreview] = useState(true);
   const [previewLanguage, setPreviewLanguage] = useState<"pt" | "en">("pt");
+  const [activeTab, setActiveTab] = useState("projects");
+  const [siteContent, setSiteContent] = useState<Record<string, SiteContent>>({});
 
   // Fetch projects
   const { data: projects = [], isLoading } = useQuery<ProjectWithTranslations[]>({
     queryKey: ["/api/projects"],
+  });
+
+  // Fetch site content
+  const { data: siteContentData = [], isLoading: isLoadingContent } = useQuery<SiteContent[]>({
+    queryKey: ["/api/site-content"],
+  });
+
+  // Initialize siteContent from query data
+  useState(() => {
+    const contentMap: Record<string, SiteContent> = {};
+    siteContentData.forEach(item => {
+      contentMap[item.key] = item;
+    });
+    DEFAULT_FIELDS.forEach(field => {
+      if (!contentMap[field.key]) {
+        contentMap[field.key] = {
+          key: field.key,
+          valuePt: field.defaultPt,
+          valueEn: field.defaultEn,
+          type: field.type
+        };
+      }
+    });
+    setSiteContent(contentMap);
+  });
+
+  // Update site content mutation
+  const updateContentMutation = useMutation({
+    mutationFn: async (content: SiteContent[]) => {
+      const token = localStorage.getItem("admin_token");
+      const response = await fetch("/api/site-content/bulk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({ content }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update content");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/site-content"] });
+      toast({
+        title: "Sucesso!",
+        description: "Conteúdo atualizado com sucesso.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   // Create project mutation
