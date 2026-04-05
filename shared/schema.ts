@@ -15,9 +15,8 @@ export const insertLanguageSchema = createInsertSchema(languages);
 // User schema with admin functionality
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  email: text("email"),
   firstName: text("first_name"),
   lastName: text("last_name"),
   isAdmin: boolean("is_admin").default(false),
@@ -26,9 +25,8 @@ export const users = pgTable("users", {
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
   email: true,
+  password: true,
   firstName: true,
   lastName: true,
   isAdmin: true,
@@ -36,7 +34,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 // Login schema
 export const loginSchema = z.object({
-  username: z.string().min(1, "Username é obrigatório"),
+  email: z.string().email("Email inválido"),
   password: z.string().min(1, "Password é obrigatória"),
 });
 
@@ -200,6 +198,19 @@ export const insertRepertoireTranslationSchema = createInsertSchema(repertoireTr
   languageCode: true,
   title: true,
 });
+
+// Dynamic Site Content (Home page hero, texts, images, etc.)
+export const siteContent = pgTable("site_content", {
+  key: text("key").primaryKey(), // ex: 'home_hero_title', 'home_hero_image'
+  valuePt: text("value_pt").notNull(),
+  valueEn: text("value_en").notNull(),
+  type: text("type").notNull().default("text"), // 'text', 'textarea', 'image'
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertSiteContentSchema = createInsertSchema(siteContent);
+export type SiteContent = typeof siteContent.$inferSelect;
+export type InsertSiteContent = typeof siteContent.$inferInsert;
 
 // Relações para traduções de repertório
 export const repertoireTranslationsRelations = relations(repertoireTranslations, ({ one }) => ({

@@ -1,0 +1,190 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // URL movido para prisma.config.ts (Prisma 7)
+}
+
+// ==================== Idiomas ====================
+model Language {
+  code      String  @id @db.VarChar(2)
+  name      String
+  isDefault Boolean @default(false) @map("is_default")
+
+  // Relações
+  eventTranslations               EventTranslation[]
+  discographyReviewTranslations   DiscographyReviewTranslation[]
+  repertoireCategoryTranslations  RepertoireCategoryTranslation[]
+  repertoireTranslations          RepertoireTranslation[]
+
+  @@map("languages")
+}
+
+// ==================== Utilizadores ====================
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  firstName String?   @map("first_name")
+  lastName  String?   @map("last_name")
+  isAdmin   Boolean   @default(false) @map("is_admin")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+// ==================== Mensagens de Contacto ====================
+model Message {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  subject   String
+  message   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("messages")
+}
+
+// ==================== Eventos ====================
+model Event {
+  id          Int       @id @default(autoincrement())
+  date        DateTime
+  time        String
+  venue       String
+  isPast      Boolean   @default(false) @map("is_past")
+  bookingLink String?   @map("booking_link")
+  programLink String?   @map("program_link")
+
+  // Relações
+  translations EventTranslation[]
+
+  @@map("events")
+}
+
+model EventTranslation {
+  id           Int    @id @default(autoincrement())
+  eventId      Int    @map("event_id")
+  languageCode String @db.VarChar(2) @map("language_code")
+  title        String
+  description  String
+
+  // Relações
+  event    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  language Language @relation(fields: [languageCode], references: [code])
+
+  @@unique([eventId, languageCode])
+  @@map("event_translations")
+}
+
+// ==================== Discografia ====================
+model Discography {
+  id            Int     @id @default(autoincrement())
+  title         String
+  year          Int
+  label         String?
+  coverImage    String? @map("cover_image")
+  spotifyUrl    String? @map("spotify_url")
+  appleMusicUrl String? @map("apple_music_url")
+  amazonUrl     String? @map("amazon_url")
+
+  // Relações
+  reviews DiscographyReview[]
+
+  @@map("discography")
+}
+
+model DiscographyReview {
+  id            Int    @id @default(autoincrement())
+  discographyId Int    @map("discography_id")
+  source        String
+
+  // Relações
+  discography  Discography                    @relation(fields: [discographyId], references: [id], onDelete: Cascade)
+  translations DiscographyReviewTranslation[]
+
+  @@map("discography_reviews")
+}
+
+model DiscographyReviewTranslation {
+  id           Int    @id @default(autoincrement())
+  reviewId     Int    @map("review_id")
+  languageCode String @db.VarChar(2) @map("language_code")
+  reviewerName String @map("reviewer_name")
+  reviewText   String @map("review_text")
+
+  // Relações
+  review   DiscographyReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  language Language          @relation(fields: [languageCode], references: [code])
+
+  @@unique([reviewId, languageCode])
+  @@map("discography_review_translations")
+}
+
+// ==================== Repertório ====================
+model RepertoireCategory {
+  id   Int    @id @default(autoincrement())
+  slug String @unique
+
+  // Relações
+  repertoire   Repertoire[]
+  translations RepertoireCategoryTranslation[]
+
+  @@map("repertoire_categories")
+}
+
+model RepertoireCategoryTranslation {
+  id           Int    @id @default(autoincrement())
+  categoryId   Int    @map("category_id")
+  languageCode String @db.VarChar(2) @map("language_code")
+  name         String
+
+  // Relações
+  category RepertoireCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  language Language           @relation(fields: [languageCode], references: [code])
+
+  @@unique([categoryId, languageCode])
+  @@map("repertoire_category_translations")
+}
+
+model Repertoire {
+  id         Int    @id @default(autoincrement())
+  composer   String
+  categoryId Int    @map("category_id")
+
+  // Relações
+  category     RepertoireCategory      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  translations RepertoireTranslation[]
+
+  @@map("repertoire")
+}
+
+model RepertoireTranslation {
+  id           Int    @id @default(autoincrement())
+  repertoireId Int    @map("repertoire_id")
+  languageCode String @db.VarChar(2) @map("language_code")
+  piece        String
+
+  // Relações
+  repertoire Repertoire @relation(fields: [repertoireId], references: [id], onDelete: Cascade)
+  language   Language   @relation(fields: [languageCode], references: [code])
+
+  @@unique([repertoireId, languageCode])
+  @@map("repertoire_translations")
+}
+
+// ==================== Conteúdo do Site ====================
+model SiteContent {
+  key       String   @id
+  valuePt   String   @map("value_pt")
+  valueEn   String   @map("value_en")
+  type      String   @default("text")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("site_content")
+}

@@ -8,7 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'portfolio-secret-key-2025';
 export interface AuthRequest extends Request {
   user?: {
     id: number;
-    username: string;
+    email: string;
     isAdmin: boolean;
   };
 }
@@ -25,11 +25,11 @@ export const verifyPassword = async (password: string, hashedPassword: string): 
 };
 
 // Generate JWT token
-export const generateToken = (user: { id: number; username: string; isAdmin: boolean }): string => {
+export const generateToken = (user: { id: number; email: string; isAdmin: boolean }): string => {
   return jwt.sign(
     { 
       id: user.id, 
-      username: user.username, 
+      email: user.email, 
       isAdmin: user.isAdmin 
     },
     JWT_SECRET,
@@ -68,7 +68,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
 
   req.user = {
     id: user.id,
-    username: user.username,
+    email: user.email,
     isAdmin: user.isAdmin || false
   };
 
@@ -84,8 +84,8 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
 };
 
 // Login function
-export const loginUser = async (username: string, password: string) => {
-  const user = await storage.getUserByUsername(username);
+export const loginUser = async (email: string, password: string) => {
+  const user = await storage.getUserByEmail(email);
   if (!user) {
     throw new Error('Credenciais inválidas');
   }
@@ -97,7 +97,7 @@ export const loginUser = async (username: string, password: string) => {
 
   const token = generateToken({
     id: user.id,
-    username: user.username,
+    email: user.email,
     isAdmin: user.isAdmin || false
   });
 
@@ -105,7 +105,6 @@ export const loginUser = async (username: string, password: string) => {
     token,
     user: {
       id: user.id,
-      username: user.username,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
