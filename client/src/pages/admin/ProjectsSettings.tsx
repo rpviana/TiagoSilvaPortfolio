@@ -86,35 +86,116 @@ const DEFAULT_NEW_PROJECT: NewProject = {
 
 function ProjectPreview({ 
   projects, 
-  language 
+  language,
+  siteContent,
+  newProject
 }: { 
   projects: ProjectWithTranslations[]; 
   language: "pt" | "en";
+  siteContent: Record<string, SiteContent>;
+  newProject?: NewProject | null;
 }) {
-  if (projects.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-500">
-        Nenhum projeto para mostrar
-      </div>
-    );
+  const getContent = (key: string, fallback: string = '') => {
+    const content = siteContent[key];
+    return language === 'pt' ? (content?.valuePt || fallback) : (content?.valueEn || fallback);
+  };
+
+  const pageTitle = getContent('projects_title', 'Projetos e Conjuntos');
+  const pageDescription = getContent('projects_description', 'Descubra os vários projetos artísticos.');
+  const bgColor = getContent('projects_bg_color', '#ffffff');
+  const titleColor = getContent('projects_title_color', '#6B2D3A');
+  const collaborativeTitle = getContent('projects_collaborative_title', 'Trabalho Colaborativo');
+  const collaborativeText1 = getContent('projects_collaborative_text1');
+  const collaborativeText2 = getContent('projects_collaborative_text2');
+
+  // Se há um novo projeto sendo criado, adicionar ao preview
+  let previewProjects = [...projects];
+  if (newProject && newProject.imageUrl && (newProject.titlePt || newProject.titleEn)) {
+    const previewProjectData: ProjectWithTranslations = {
+      id: -1,
+      imageUrl: newProject.imageUrl,
+      order: newProject.order,
+      translations: [
+        { languageCode: "pt", title: newProject.titlePt || "Novo Projeto", description: newProject.descriptionPt || "" },
+        { languageCode: "en", title: newProject.titleEn || "New Project", description: newProject.descriptionEn || "" },
+      ],
+      links: newProject.links || []
+    };
+    previewProjects = [...projects, previewProjectData].sort((a, b) => a.order - b.order);
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {projects.map((project) => {
-        const translation = project.translations.find(t => t.languageCode === language);
-        if (!translation) return null;
+    <div className="h-full overflow-auto p-4" style={{ backgroundColor: bgColor }}>
+      {/* Page Title */}
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-playfair font-bold mb-2" style={{ color: titleColor }}>
+          {pageTitle}
+        </h1>
+        <p className="text-xs text-gray-600 max-w-md mx-auto">
+          {pageDescription}
+        </p>
+      </div>
 
-        return (
-          <ProjectCard
-            key={project.id}
-            title={translation.title}
-            description={translation.description}
-            imageUrl={project.imageUrl}
-            links={project.links.map(link => ({ type: link.type as any, url: link.url }))}
-          />
-        );
-      })}
+      {/* Projects Grid */}
+      {previewProjects.length === 0 ? (
+        <div className="text-center py-8 text-gray-500 text-sm">
+          Nenhum projeto para mostrar
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          {previewProjects.map((project) => {
+            const translation = project.translations.find(t => t.languageCode === language) || project.translations[0];
+            const isPreview = project.id === -1;
+            
+            if (!translation) return null;
+
+            return (
+              <div key={project.id} className={`bg-white rounded-lg shadow-sm overflow-hidden relative ${isPreview ? 'ring-2 ring-primary ring-opacity-50' : ''}`}>
+                {isPreview && (
+                  <div className="absolute top-1 right-1 bg-primary text-white text-[8px] px-1.5 py-0.5 rounded-full z-10">
+                    Preview
+                  </div>
+                )}
+                <img 
+                  src={project.imageUrl} 
+                  alt={translation.title}
+                  className="w-full h-24 object-cover"
+                />
+                <div className="p-2">
+                  <h3 className="text-xs font-bold mb-1" style={{ color: titleColor }}>
+                    {translation.title}
+                  </h3>
+                  <p className="text-[9px] text-gray-600 line-clamp-2">
+                    {translation.description}
+                  </p>
+                  {project.links && project.links.length > 0 && (
+                    <div className="flex gap-1 mt-2">
+                      {project.links.map((link, idx) => (
+                        <span key={idx} className="text-[8px] px-1.5 py-0.5 bg-gray-100 rounded">
+                          {link.type}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Collaborative Work Section */}
+      {collaborativeText1 && (
+        <div className="mt-6">
+          <h2 className="text-lg font-playfair font-bold mb-3" style={{ color: titleColor }}>
+            {collaborativeTitle}
+          </h2>
+          <div className="bg-gray-50 p-3 rounded-lg text-[10px]">
+            {collaborativeText1 && <p className="mb-2">{collaborativeText1}</p>}
+            {collaborativeText2 && <p>{collaborativeText2}</p>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -164,14 +245,14 @@ export default function ProjectsSettings() {
   const updateContentMutation = useMutation({
     mutationFn: async (content: SiteContent[]) => {
       const token = localStorage.getItem("admin_token");
-      const response = await fetch("/api/site-content/bulk", {
+      const response = await fetch("/api/site-content", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
         credentials: "include",
-        body: JSON.stringify({ content }),
+        body: JSON.stringify(content),
       });
 
       if (!response.ok) throw new Error("Failed to update content");
@@ -726,7 +807,12 @@ export default function ProjectsSettings() {
                 </Tabs>
               </div>
               <div className="border rounded-lg p-4 bg-gray-50">
-                <ProjectPreview projects={projects} language={previewLanguage} />
+                <ProjectPreview 
+                  projects={projects} 
+                  language={previewLanguage} 
+                  siteContent={siteContent}
+                  newProject={(isCreating || editingId) ? newProject : null}
+                />
               </div>
             </div>
           </div>
