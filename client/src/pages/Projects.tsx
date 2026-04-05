@@ -46,9 +46,15 @@ const Projects = () => {
   // Fetch site content for customization
   const { data: siteContent = [] } = useQuery<SiteContent[]>({
     queryKey: ['/api/site-content'],
+    queryFn: async () => {
+      const response = await fetch('/api/site-content');
+      if (!response.ok) return [];
+      return response.json();
+    },
   });
 
   const getContent = (key: string, fallback: string = '') => {
+    if (!Array.isArray(siteContent)) return fallback;
     const content = siteContent.find(item => item.key === key);
     return currentLang === 'pt' ? (content?.valuePt || fallback) : (content?.valueEn || fallback);
   };
