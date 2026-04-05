@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
+import config from './prisma.config'
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient(config)
 
 async function main() {
   console.log('🌱 Seeding database...')
