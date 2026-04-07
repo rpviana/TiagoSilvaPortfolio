@@ -9,6 +9,8 @@ import {
   Loader2, Save, Eye, EyeOff, Plus, Trash2, Edit2, 
   Link as LinkIcon, X, Image as ImageIcon, GripVertical, Palette, Check
 } from "lucide-react";
+import { motion } from 'framer-motion';
+import ProjectCard from '@/components/ProjectCard';
 
 type SiteContent = {
   key: string;
@@ -134,105 +136,114 @@ function ProjectPreview({
   }
 
   return (
-    <div className="h-full overflow-auto p-4" style={{ backgroundColor: bgColor }}>
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-playfair font-bold mb-2" style={{ color: titleColor }}>
-          {pageTitle}
-        </h1>
-        <p className="text-xs text-gray-600 max-w-md mx-auto">
-          {pageDescription}
-        </p>
-      </div>
+    <div className="h-full overflow-auto" style={{ backgroundColor: bgColor }}>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto">
+          <motion.div 
+            className="text-center mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h1 className="text-3xl md:text-4xl font-playfair font-bold mb-3" style={{ color: titleColor }}>
+              {pageTitle}
+            </h1>
+            <p className="text-sm text-gray-600 max-w-2xl mx-auto">
+              {pageDescription}
+            </p>
+          </motion.div>
+          
+          {previewProjects.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              Nenhum projeto para mostrar
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+              {previewProjects.map((project, index) => {
+                const translation = project.translations.find(t => t.languageCode === language) 
+                  || project.translations[0];
+                const isPreview = project.id === -1;
+                
+                if (!translation) return null;
 
-      {previewProjects.length === 0 ? (
-        <div className="text-center py-8 text-gray-500 text-sm">
-          Nenhum projeto para mostrar
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          {previewProjects.map((project) => {
-            const translation = project.translations.find(t => t.languageCode === language) || project.translations[0];
-            const isPreview = project.id === -1;
-            
-            if (!translation) return null;
-
-            return (
-              <div key={project.id} className={`bg-white rounded-lg shadow-sm overflow-hidden relative ${isPreview ? 'ring-2 ring-primary ring-opacity-50' : ''}`}>
-                {isPreview && (
-                  <div className="absolute top-1 right-1 bg-primary text-white text-[8px] px-1.5 py-0.5 rounded-full z-10">
-                    Preview
-                  </div>
-                )}
-                <img 
-                  src={project.imageUrl} 
-                  alt={translation.title}
-                  className="w-full h-24 object-cover"
-                />
-                <div className="p-2">
-                  <h3 className="text-xs font-bold mb-1" style={{ color: titleColor }}>
-                    {translation.title}
-                  </h3>
-                  <p className="text-[9px] text-gray-600 line-clamp-2">
-                    {translation.description}
-                  </p>
-                  {project.links && project.links.length > 0 && (
-                    <div className="flex gap-1 mt-2">
-                      {project.links.map((link, idx) => (
-                        <span key={idx} className="text-[8px] px-1.5 py-0.5 bg-gray-100 rounded">
-                          {link.type}
-                        </span>
-                      ))}
-                    </div>
+                return (
+                  <motion.div 
+                    key={project.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 + 0.2 }}
+                    className={`relative ${isPreview ? 'ring-2 ring-primary ring-opacity-50 rounded-lg' : ''}`}
+                  >
+                    {isPreview && (
+                      <div className="absolute -top-2 -right-2 bg-primary text-white text-xs px-2 py-1 rounded-full z-10 shadow-md">
+                        Preview
+                      </div>
+                    )}
+                    <ProjectCard 
+                      title={translation.title}
+                      description={translation.description}
+                      imageUrl={project.imageUrl}
+                      links={project.links.map(link => ({ type: link.type as any, url: link.url }))}
+                    />
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+          
+          {/* Collaborative Work */}
+          {collaborativeText1 && (
+            <motion.div 
+              className="mt-12"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            >
+              <h2 className="text-2xl font-playfair font-bold mb-6" style={{ color: titleColor }}>
+                {collaborativeTitle}
+              </h2>
+              
+              <div className="bg-gray-50 p-6 rounded-lg shadow-md">
+                <div className="prose prose-sm max-w-none">
+                  {collaborativeText1 && <p className="text-sm">{collaborativeText1}</p>}
+                  {collaborativeText2 && <p className="text-sm">{collaborativeText2}</p>}
+                  
+                  {(collaboration1 || collaboration2 || collaboration3 || collaboration4) && (
+                    <>
+                      <h3 className="font-playfair mt-6 mb-3 text-base" style={{ color: titleColor }}>
+                        {pastCollabTitle}
+                      </h3>
+                      
+                      <ul className="list-disc pl-5 space-y-1 text-sm">
+                        {collaboration1 && <li>{collaboration1}</li>}
+                        {collaboration2 && <li>{collaboration2}</li>}
+                        {collaboration3 && <li>{collaboration3}</li>}
+                        {collaboration4 && <li>{collaboration4}</li>}
+                      </ul>
+                    </>
                   )}
                 </div>
               </div>
-            );
-          })}
-        </div>
-      )}
-
-      {collaborativeText1 && (
-        <div className="mt-6">
-          <h2 className="text-lg font-playfair font-bold mb-3" style={{ color: titleColor }}>
-            {collaborativeTitle}
-          </h2>
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <div className="text-[10px] space-y-2">
-              {collaborativeText1 && <p>{collaborativeText1}</p>}
-              {collaborativeText2 && <p>{collaborativeText2}</p>}
-              
-              {(collaboration1 || collaboration2 || collaboration3 || collaboration4) && (
-                <>
-                  <h3 className="font-semibold mt-3 mb-1" style={{ color: titleColor }}>
-                    {pastCollabTitle}
-                  </h3>
-                  <ul className="list-disc pl-4 space-y-1">
-                    {collaboration1 && <li>{collaboration1}</li>}
-                    {collaboration2 && <li>{collaboration2}</li>}
-                    {collaboration3 && <li>{collaboration3}</li>}
-                    {collaboration4 && <li>{collaboration4}</li>}
-                  </ul>
-                </>
-              )}
-            </div>
+            </motion.div>
+          )}
+          
+          {/* Repertório Download */}
+          <div className="flex flex-col items-center mt-12">
+            <h2 className="text-xl font-playfair font-semibold mb-3" style={{ color: titleColor }}>
+              {repertoireTitle}
+            </h2>
+            <button
+              className="inline-flex items-center justify-center bg-white border-2 px-6 py-3 rounded-full font-semibold text-sm shadow-lg transition-colors duration-200"
+              style={{ 
+                borderColor: titleColor, 
+                color: titleColor 
+              }}
+            >
+              <i className="fas fa-download mr-2"></i>
+              {repertoireButton}
+            </button>
           </div>
         </div>
-      )}
-
-      <div className="mt-6 text-center">
-        <h2 className="text-base font-playfair font-semibold mb-2" style={{ color: titleColor }}>
-          {repertoireTitle}
-        </h2>
-        <button
-          className="text-[10px] px-4 py-2 rounded-full border-2 font-semibold"
-          style={{ 
-            borderColor: titleColor, 
-            color: titleColor 
-          }}
-        >
-          <i className="fas fa-download mr-1"></i>
-          {repertoireButton}
-        </button>
       </div>
     </div>
   );
@@ -522,7 +533,8 @@ export default function ProjectsSettings() {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               <TabsTrigger value="projects">Projetos</TabsTrigger>
-              <TabsTrigger value="styles">Estilos e Conteúdo</TabsTrigger>
+              <TabsTrigger value="work">Trabalhos</TabsTrigger>
+              <TabsTrigger value="colors">Cores</TabsTrigger>
             </TabsList>
 
             <TabsContent value="projects" className="space-y-4">
@@ -706,44 +718,8 @@ export default function ProjectsSettings() {
               </div>
             </TabsContent>
 
-            <TabsContent value="styles" className="space-y-4">
-              {/* Cores em destaque - sincronizadas PT/EN */}
-              <div className="bg-white p-4 rounded-lg border">
-                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                  <Palette className="h-5 w-5" />
-                  Cores da Página
-                </h3>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  {DEFAULT_FIELDS.filter(f => f.type === 'color').map(field => (
-                    <div key={field.key}>
-                      <label className="text-sm font-medium mb-2 block">{field.label}</label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="color"
-                          value={siteContent[field.key]?.valuePt || field.defaultPt}
-                          onChange={(e) => {
-                            handleContentChange(field.key, 'valuePt', e.target.value);
-                            handleContentChange(field.key, 'valueEn', e.target.value);
-                          }}
-                          className="w-16 h-10 p-1"
-                        />
-                        <Input
-                          type="text"
-                          value={siteContent[field.key]?.valuePt || field.defaultPt}
-                          onChange={(e) => {
-                            handleContentChange(field.key, 'valuePt', e.target.value);
-                            handleContentChange(field.key, 'valueEn', e.target.value);
-                          }}
-                          className="flex-1"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Conteúdos com sub-tabs PT/EN */}
+            <TabsContent value="work" className="space-y-4">
+              {/* Conteúdos de Trabalho Colaborativo com sub-tabs PT/EN */}
               <div className="bg-white p-4 rounded-lg border">
                 <h3 className="font-semibold text-lg mb-4">Conteúdo da Página</h3>
                 
@@ -933,6 +909,44 @@ export default function ProjectsSettings() {
                     </div>
                   </TabsContent>
                 </Tabs>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="colors" className="space-y-4">
+              {/* Cores em destaque - sincronizadas PT/EN */}
+              <div className="bg-white p-4 rounded-lg border">
+                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                  <Palette className="h-5 w-5" />
+                  Cores da Página
+                </h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  {DEFAULT_FIELDS.filter(f => f.type === 'color').map(field => (
+                    <div key={field.key}>
+                      <label className="text-sm font-medium mb-2 block">{field.label}</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={siteContent[field.key]?.valuePt || field.defaultPt}
+                          onChange={(e) => {
+                            handleContentChange(field.key, 'valuePt', e.target.value);
+                            handleContentChange(field.key, 'valueEn', e.target.value);
+                          }}
+                          className="w-16 h-10 p-1"
+                        />
+                        <Input
+                          type="text"
+                          value={siteContent[field.key]?.valuePt || field.defaultPt}
+                          onChange={(e) => {
+                            handleContentChange(field.key, 'valuePt', e.target.value);
+                            handleContentChange(field.key, 'valueEn', e.target.value);
+                          }}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </TabsContent>
           </Tabs>
