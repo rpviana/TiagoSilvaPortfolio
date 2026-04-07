@@ -423,7 +423,15 @@ export default function ProjectsSettings() {
 
   const handleSaveContent = async () => {
     setIsSaving(true);
-    const contentArray = Object.values(siteContent);
+    
+    // Remover updatedAt dos objetos antes de enviar
+    const contentArray = Object.values(siteContent).map(({ key, valuePt, valueEn, type }) => ({
+      key,
+      valuePt,
+      valueEn,
+      type
+    }));
+    
     await updateContentMutation.mutateAsync(contentArray);
     setIsSaving(false);
   };
