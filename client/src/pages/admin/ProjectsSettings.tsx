@@ -294,6 +294,9 @@ export default function ProjectsSettings() {
   const updateContentMutation = useMutation({
     mutationFn: async (content: SiteContent[]) => {
       const token = localStorage.getItem("admin_token");
+      
+      console.log("Saving content:", content); // Debug
+      
       const response = await fetch("/api/site-content", {
         method: "POST",
         headers: {
@@ -305,7 +308,9 @@ export default function ProjectsSettings() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update content");
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+        throw new Error(`Failed to update content: ${errorText}`);
       }
 
       return response.json();
@@ -317,10 +322,11 @@ export default function ProjectsSettings() {
         description: "As alterações foram guardadas com sucesso.",
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
+      console.error("Mutation error:", error);
       toast({
         title: "Erro",
-        description: "Falha ao guardar as alterações.",
+        description: error.message || "Falha ao guardar as alterações.",
         variant: "destructive",
       });
     },
