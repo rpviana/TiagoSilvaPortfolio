@@ -224,21 +224,23 @@ export default function ProjectsSettings() {
 
   // Initialize siteContent from query data
   useEffect(() => {
-    const contentMap: Record<string, SiteContent> = {};
-    siteContentData.forEach(item => {
-      contentMap[item.key] = item;
-    });
-    DEFAULT_FIELDS.forEach(field => {
-      if (!contentMap[field.key]) {
-        contentMap[field.key] = {
-          key: field.key,
-          valuePt: field.defaultPt,
-          valueEn: field.defaultEn,
-          type: field.type
-        };
-      }
-    });
-    setSiteContent(contentMap);
+    if (siteContentData.length > 0 && Object.keys(siteContent).length === 0) {
+      const contentMap: Record<string, SiteContent> = {};
+      siteContentData.forEach(item => {
+        contentMap[item.key] = item;
+      });
+      DEFAULT_FIELDS.forEach(field => {
+        if (!contentMap[field.key]) {
+          contentMap[field.key] = {
+            key: field.key,
+            valuePt: field.defaultPt,
+            valueEn: field.defaultEn,
+            type: field.type
+          };
+        }
+      });
+      setSiteContent(contentMap);
+    }
   }, [siteContentData]);
 
   // Update site content mutation
