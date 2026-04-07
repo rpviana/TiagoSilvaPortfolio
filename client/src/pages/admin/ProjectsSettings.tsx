@@ -831,6 +831,52 @@ export default function ProjectsSettings() {
               </TabsList>
 
               <TabsContent value="pt" className="space-y-6 mt-4">
+                {/* Cores - Primeiro */}
+                <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <Palette className="h-5 w-5" />
+                    Cores da Página
+                  </h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Cor de Fundo</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={siteContent['projects_bg_color']?.valuePt || '#ffffff'}
+                          onChange={(e) => handleContentChange('projects_bg_color', 'valuePt', e.target.value)}
+                          className="w-20"
+                        />
+                        <Input
+                          type="text"
+                          value={siteContent['projects_bg_color']?.valuePt || '#ffffff'}
+                          onChange={(e) => handleContentChange('projects_bg_color', 'valuePt', e.target.value)}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Cor dos Títulos</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={siteContent['projects_title_color']?.valuePt || '#6B2D3A'}
+                          onChange={(e) => handleContentChange('projects_title_color', 'valuePt', e.target.value)}
+                          className="w-20"
+                        />
+                        <Input
+                          type="text"
+                          value={siteContent['projects_title_color']?.valuePt || '#6B2D3A'}
+                          onChange={(e) => handleContentChange('projects_title_color', 'valuePt', e.target.value)}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Título e Descrição */}
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg">Título e Descrição</h3>
                   
@@ -852,6 +898,7 @@ export default function ProjectsSettings() {
                   </div>
                 </div>
 
+                {/* Trabalho Colaborativo */}
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg">Trabalho Colaborativo</h3>
                   
@@ -882,6 +929,7 @@ export default function ProjectsSettings() {
                   </div>
                 </div>
 
+                {/* Colaborações Passadas */}
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg">Colaborações Passadas</h3>
                   
@@ -903,32 +951,55 @@ export default function ProjectsSettings() {
                     </div>
                   ))}
                 </div>
-
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Cores</h3>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Cor de Fundo</label>
-                      <Input
-                        type="color"
-                        value={siteContent['projects_bg_color']?.valuePt || '#ffffff'}
-                        onChange={(e) => handleContentChange('projects_bg_color', 'valuePt', e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Cor do Título</label>
-                      <Input
-                        type="color"
-                        value={siteContent['projects_title_color']?.valuePt || '#6B2D3A'}
-                        onChange={(e) => handleContentChange('projects_title_color', 'valuePt', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
               </TabsContent>
 
               <TabsContent value="en" className="space-y-6 mt-4">
+                {/* Cores - Primeiro */}
+                <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <Palette className="h-5 w-5" />
+                    Page Colors
+                  </h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Background Color</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={siteContent['projects_bg_color']?.valueEn || '#ffffff'}
+                          onChange={(e) => handleContentChange('projects_bg_color', 'valueEn', e.target.value)}
+                          className="w-20"
+                        />
+                        <Input
+                          type="text"
+                          value={siteContent['projects_bg_color']?.valueEn || '#ffffff'}
+                          onChange={(e) => handleContentChange('projects_bg_color', 'valueEn', e.target.value)}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Title Color</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={siteContent['projects_title_color']?.valueEn || '#6B2D3A'}
+                          onChange={(e) => handleContentChange('projects_title_color', 'valueEn', e.target.value)}
+                          className="w-20"
+                        />
+                        <Input
+                          type="text"
+                          value={siteContent['projects_title_color']?.valueEn || '#6B2D3A'}
+                          onChange={(e) => handleContentChange('projects_title_color', 'valueEn', e.target.value)}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Title and Description */}
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg">Title and Description</h3>
                   
@@ -950,6 +1021,7 @@ export default function ProjectsSettings() {
                   </div>
                 </div>
 
+                {/* Collaborative Work */}
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg">Collaborative Work</h3>
                   
@@ -980,6 +1052,7 @@ export default function ProjectsSettings() {
                   </div>
                 </div>
 
+                {/* Past Collaborations */}
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg">Past Collaborations</h3>
                   
@@ -1000,29 +1073,6 @@ export default function ProjectsSettings() {
                       />
                     </div>
                   ))}
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Colors</h3>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Background Color</label>
-                      <Input
-                        type="color"
-                        value={siteContent['projects_bg_color']?.valueEn || '#ffffff'}
-                        onChange={(e) => handleContentChange('projects_bg_color', 'valueEn', e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Title Color</label>
-                      <Input
-                        type="color"
-                        value={siteContent['projects_title_color']?.valueEn || '#6B2D3A'}
-                        onChange={(e) => handleContentChange('projects_title_color', 'valueEn', e.target.value)}
-                      />
-                    </div>
-                  </div>
                 </div>
               </TabsContent>
             </Tabs>
