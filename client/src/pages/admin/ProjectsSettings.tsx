@@ -107,6 +107,13 @@ function ProjectPreview({
   const collaborativeTitle = getContent('projects_collaborative_title', 'Trabalho Colaborativo');
   const collaborativeText1 = getContent('projects_collaborative_text1');
   const collaborativeText2 = getContent('projects_collaborative_text2');
+  const pastCollabTitle = getContent('projects_past_collaborations_title', 'Colaborações Passadas');
+  const collaboration1 = getContent('projects_collaboration1');
+  const collaboration2 = getContent('projects_collaboration2');
+  const collaboration3 = getContent('projects_collaboration3');
+  const collaboration4 = getContent('projects_collaboration4');
+  const repertoireTitle = getContent('projects_repertoire_title', 'Repertório');
+  const repertoireButton = getContent('projects_repertoire_button', 'Baixar Repertório (PDF)');
 
   // Se há um novo projeto sendo criado, adicionar ao preview
   let previewProjects = [...projects];
@@ -190,12 +197,45 @@ function ProjectPreview({
           <h2 className="text-lg font-playfair font-bold mb-3" style={{ color: titleColor }}>
             {collaborativeTitle}
           </h2>
-          <div className="bg-gray-50 p-3 rounded-lg text-[10px]">
-            {collaborativeText1 && <p className="mb-2">{collaborativeText1}</p>}
-            {collaborativeText2 && <p>{collaborativeText2}</p>}
+          <div className="bg-gray-50 p-3 rounded-lg">
+            <div className="text-[10px] space-y-2">
+              {collaborativeText1 && <p>{collaborativeText1}</p>}
+              {collaborativeText2 && <p>{collaborativeText2}</p>}
+              
+              {(collaboration1 || collaboration2 || collaboration3 || collaboration4) && (
+                <>
+                  <h3 className="font-semibold mt-3 mb-1" style={{ color: titleColor }}>
+                    {pastCollabTitle}
+                  </h3>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {collaboration1 && <li>{collaboration1}</li>}
+                    {collaboration2 && <li>{collaboration2}</li>}
+                    {collaboration3 && <li>{collaboration3}</li>}
+                    {collaboration4 && <li>{collaboration4}</li>}
+                  </ul>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
+
+      {/* Repertoire Section */}
+      <div className="mt-6 text-center">
+        <h2 className="text-base font-playfair font-semibold mb-2" style={{ color: titleColor }}>
+          {repertoireTitle}
+        </h2>
+        <button
+          className="text-[10px] px-4 py-2 rounded-full border-2 font-semibold"
+          style={{ 
+            borderColor: titleColor, 
+            color: titleColor 
+          }}
+        >
+          <i className="fas fa-download mr-1"></i>
+          {repertoireButton}
+        </button>
+      </div>
     </div>
   );
 }
@@ -247,6 +287,7 @@ export default function ProjectsSettings() {
   const updateContentMutation = useMutation({
     mutationFn: async (content: SiteContent[]) => {
       const token = localStorage.getItem("admin_token");
+      console.log('Sending site content update:', content);
       const response = await fetch("/api/site-content", {
         method: "POST",
         headers: {
@@ -257,7 +298,11 @@ export default function ProjectsSettings() {
         body: JSON.stringify(content),
       });
 
-      if (!response.ok) throw new Error("Failed to update content");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        console.error('Site content update failed:', errorData);
+        throw new Error(errorData.message || "Failed to update content");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -268,6 +313,7 @@ export default function ProjectsSettings() {
       });
     },
     onError: (error: Error) => {
+      console.error('Mutation error:', error);
       toast({
         title: "Erro",
         description: error.message,
@@ -496,14 +542,20 @@ export default function ProjectsSettings() {
   };
 
   const handleSaveContent = async () => {
-    const contentArray = Object.values(siteContent);
+    const contentArray = Object.values(siteContent).filter(item => item.key); // Remove empty items
+    console.log('Saving content:', contentArray);
     updateContentMutation.mutate(contentArray);
   };
 
   const handleContentChange = (key: string, field: 'valuePt' | 'valueEn', value: string) => {
     setSiteContent(prev => ({
       ...prev,
-      [key]: { ...prev[key], [field]: value }
+      [key]: { 
+        ...prev[key], 
+        key: prev[key]?.key || key,
+        type: prev[key]?.type || 'text',
+        [field]: value 
+      }
     }));
   };
 
