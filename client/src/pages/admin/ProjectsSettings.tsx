@@ -335,6 +335,28 @@ export default function ProjectsSettings() {
   const createProjectMutation = useMutation({
     mutationFn: async (project: NewProject) => {
       const token = localStorage.getItem("admin_token");
+      
+      // Preparar dados no formato que o backend espera
+      const requestBody = {
+        project: {
+          imageUrl: project.imageUrl,
+          order: project.order
+        },
+        translations: [
+          {
+            languageCode: 'pt',
+            title: project.titlePt,
+            description: project.descriptionPt
+          },
+          {
+            languageCode: 'en',
+            title: project.titleEn,
+            description: project.descriptionEn
+          }
+        ],
+        links: project.links
+      };
+      
       const response = await fetch("/api/projects", {
         method: "POST",
         headers: {
@@ -342,10 +364,14 @@ export default function ProjectsSettings() {
           "Authorization": `Bearer ${token}`,
         },
         credentials: "include",
-        body: JSON.stringify(project),
+        body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) throw new Error("Failed to create project");
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Create project error:", errorText);
+        throw new Error(`Failed to create project: ${errorText}`);
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -354,25 +380,52 @@ export default function ProjectsSettings() {
       setNewProject(DEFAULT_NEW_PROJECT);
       toast({ title: "Projeto criado com sucesso!" });
     },
-    onError: () => {
-      toast({ title: "Erro ao criar projeto", variant: "destructive" });
+    onError: (error: Error) => {
+      console.error("Create mutation error:", error);
+      toast({ title: "Erro ao criar projeto", description: error.message, variant: "destructive" });
     },
   });
 
   const updateProjectMutation = useMutation({
     mutationFn: async ({ id, project }: { id: number; project: NewProject }) => {
       const token = localStorage.getItem("admin_token");
+      
+      // Preparar dados no formato que o backend espera
+      const requestBody = {
+        project: {
+          imageUrl: project.imageUrl,
+          order: project.order
+        },
+        translations: [
+          {
+            languageCode: 'pt',
+            title: project.titlePt,
+            description: project.descriptionPt
+          },
+          {
+            languageCode: 'en',
+            title: project.titleEn,
+            description: project.descriptionEn
+          }
+        ],
+        links: project.links
+      };
+      
       const response = await fetch(`/api/projects/${id}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
         credentials: "include",
-        body: JSON.stringify(project),
+        body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) throw new Error("Failed to update project");
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Update project error:", errorText);
+        throw new Error(`Failed to update project: ${errorText}`);
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -381,8 +434,9 @@ export default function ProjectsSettings() {
       setNewProject(DEFAULT_NEW_PROJECT);
       toast({ title: "Projeto atualizado com sucesso!" });
     },
-    onError: () => {
-      toast({ title: "Erro ao atualizar projeto", variant: "destructive" });
+    onError: (error: Error) => {
+      console.error("Update mutation error:", error);
+      toast({ title: "Erro ao atualizar projeto", description: error.message, variant: "destructive" });
     },
   });
 
