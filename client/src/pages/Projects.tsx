@@ -47,10 +47,17 @@ const Projects = () => {
   const { data: siteContent = [] } = useQuery<SiteContent[]>({
     queryKey: ['/api/site-content'],
     queryFn: async () => {
-      const response = await fetch('/api/site-content');
+      const response = await fetch('/api/site-content', {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       if (!response.ok) return [];
       return response.json();
     },
+    staleTime: 0, // Sempre buscar dados frescos
+    cacheTime: 0, // Não cachear
   });
 
   const getContent = (key: string, fallback: string = '') => {
