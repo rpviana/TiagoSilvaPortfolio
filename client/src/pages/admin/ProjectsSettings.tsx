@@ -594,19 +594,17 @@ export default function ProjectsSettings() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="projects">Projetos</TabsTrigger>
-          <TabsTrigger value="styles">
-            <Palette className="h-4 w-4 mr-2" />
-            Estilos e Conteúdo
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="projects" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Form Section */}
+      {/* Main Grid Layout with Preview */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left: Forms and Content */}
         <div className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="projects">Projetos</TabsTrigger>
+              <TabsTrigger value="styles">Estilos e Conteúdo</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="projects" className="mt-6 space-y-6">
           {/* Create/Edit Form */}
           <div className="bg-white p-6 rounded-lg shadow-sm border">
             <h2 className="text-xl font-semibold mb-4">
@@ -845,41 +843,76 @@ export default function ProjectsSettings() {
               )}
             </div>
           </div>
-        </div>
+            </TabsContent>
 
-        {/* Preview Section */}
-        {showPreview && (
-          <div className="lg:sticky lg:top-6 h-fit">
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Preview</h3>
-                <Tabs value={previewLanguage} onValueChange={(v) => setPreviewLanguage(v as "pt" | "en")}>
-                  <TabsList>
-                    <TabsTrigger value="pt">🇵🇹 PT</TabsTrigger>
-                    <TabsTrigger value="en">🇬🇧 EN</TabsTrigger>
+            <TabsContent value="styles" className="mt-6 space-y-6">
+              {/* Cores Section */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Palette className="h-5 w-5" />
+                  Cores da Página
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Cor de Fundo</label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="color"
+                        value={siteContent['projects_bg_color']?.valuePt || '#ffffff'}
+                        onChange={(e) => {
+                          handleContentChange('projects_bg_color', 'valuePt', e.target.value);
+                          handleContentChange('projects_bg_color', 'valueEn', e.target.value);
+                        }}
+                        className="w-20 h-10 p-1"
+                      />
+                      <Input
+                        type="text"
+                        value={siteContent['projects_bg_color']?.valuePt || '#ffffff'}
+                        onChange={(e) => {
+                          handleContentChange('projects_bg_color', 'valuePt', e.target.value);
+                          handleContentChange('projects_bg_color', 'valueEn', e.target.value);
+                        }}
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Cor dos Títulos</label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="color"
+                        value={siteContent['projects_title_color']?.valuePt || '#6B2D3A'}
+                        onChange={(e) => {
+                          handleContentChange('projects_title_color', 'valuePt', e.target.value);
+                          handleContentChange('projects_title_color', 'valueEn', e.target.value);
+                        }}
+                        className="w-20 h-10 p-1"
+                      />
+                      <Input
+                        type="text"
+                        value={siteContent['projects_title_color']?.valuePt || '#6B2D3A'}
+                        onChange={(e) => {
+                          handleContentChange('projects_title_color', 'valuePt', e.target.value);
+                          handleContentChange('projects_title_color', 'valueEn', e.target.value);
+                        }}
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Conteúdo Section */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <h3 className="text-lg font-semibold mb-4">Conteúdo da Página</h3>
+                
+                <Tabs defaultValue="pt" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="pt">🇵🇹 Português</TabsTrigger>
+                    <TabsTrigger value="en">🇬🇧 English</TabsTrigger>
                   </TabsList>
-                </Tabs>
-              </div>
-              <div className="border rounded-lg p-4 bg-gray-50">
-                <ProjectPreview 
-                  projects={projects} 
-                  language={previewLanguage} 
-                  siteContent={siteContent}
-                  newProject={(isCreating || editingId) ? newProject : null}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-        </TabsContent>
-
-        <TabsContent value="styles" className="mt-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border max-w-4xl">
-            <h2 className="text-xl font-semibold mb-6">Personalizar Página de Projetos</h2>
-            
-            <Tabs defaultValue="pt" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="pt">🇵🇹 Português</TabsTrigger>
                 <TabsTrigger value="en">🇬🇧 English</TabsTrigger>
               </TabsList>
