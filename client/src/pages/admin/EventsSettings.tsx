@@ -475,13 +475,12 @@ export default function AdminEventsSettings() {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] pt-16">
-      <div className="grid grid-cols-2 h-full">
+    <div className="flex flex-col lg:flex-row gap-0 lg:h-[calc(100vh-4rem)]">
         {/* Left: Editor */}
-        <div className="overflow-auto p-6 border-r">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">Gestão de Eventos</h1>
-            <div className="flex gap-2">
+        <div className="overflow-auto p-4 md:p-6 lg:border-r w-full lg:w-1/2">
+          <div className="flex flex-wrap items-center justify-between mb-6 gap-2">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-800">Gestão de Eventos</h1>
+            <div className="flex gap-2 shrink-0">
               <Button
                 variant="outline"
                 size="sm"
@@ -516,7 +515,7 @@ export default function AdminEventsSettings() {
                     </Button>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className="text-sm font-medium">Data *</label>
                       <Input
@@ -544,7 +543,7 @@ export default function AdminEventsSettings() {
                     />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className="text-sm font-medium">Link Reserva (opcional)</label>
                       <Input
@@ -565,7 +564,7 @@ export default function AdminEventsSettings() {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className="text-sm font-medium">Título (PT) *</label>
                       <Input
@@ -740,7 +739,7 @@ export default function AdminEventsSettings() {
 
         {/* Right: Preview */}
         {showPreview && (
-          <div className="flex flex-col h-full bg-gray-100">
+          <div className="flex flex-col lg:h-full bg-gray-100 border-t lg:border-t-0 min-h-[350px] w-full lg:w-1/2">
             <div className="flex items-center justify-between px-4 py-2 bg-white border-b">
               <span className="text-sm font-medium text-gray-600">Pré-visualização</span>
               <div className="flex gap-1">
@@ -767,7 +766,6 @@ export default function AdminEventsSettings() {
             />
           </div>
         )}
-      </div>
     </div>
   );
 }

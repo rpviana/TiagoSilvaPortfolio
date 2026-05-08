@@ -175,16 +175,16 @@ export default function AdminHeaderSettings() {
   }
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-120px)]">
+    <div className="flex flex-col lg:flex-row gap-6 lg:h-[calc(100vh-120px)]">
       {/* Left Panel - Editor */}
-      <div className={`${showPreview ? 'w-1/2' : 'w-full'} overflow-auto transition-all duration-300`}>
+      <div className={`${showPreview ? 'lg:w-1/2' : ''} w-full overflow-auto transition-all duration-300`}>
         <div className="space-y-6 pr-4">
-          <div className="flex justify-between items-center sticky top-0 bg-gray-50 dark:bg-zinc-950 py-4 z-10">
-            <div>
-              <h1 className="text-2xl font-playfair font-bold">Editar Header</h1>
-              <p className="text-sm text-muted-foreground">Personalize o cabeçalho do site.</p>
+          <div className="flex flex-wrap justify-between items-center sticky top-0 bg-gray-50 dark:bg-zinc-950 py-4 z-10 gap-2">
+            <div className="min-w-0">
+              <h1 className="text-xl md:text-2xl font-playfair font-bold">Editar Header</h1>
+              <p className="text-sm text-muted-foreground hidden sm:block">Personalize o cabeçalho do site.</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 shrink-0">
               <Button 
                 variant="outline" 
                 size="sm"
@@ -215,7 +215,7 @@ export default function AdminHeaderSettings() {
                       {field.label}
                     </AccordionTrigger>
                     <AccordionContent className="px-3 pb-3">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label className="text-xs font-semibold flex items-center gap-2">
                             <span className="w-5 h-3 bg-red-600 inline-block overflow-hidden relative rounded-sm">
@@ -284,7 +284,7 @@ export default function AdminHeaderSettings() {
 
       {/* Right Panel - Live Preview */}
       {showPreview && (
-        <div className="w-1/2 flex flex-col border-l border-gray-200 dark:border-zinc-800">
+        <div className="w-full lg:w-1/2 flex flex-col border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-zinc-800 min-h-[300px] lg:min-h-0">
           <div className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800">
             <div className="flex items-center gap-2">
               <Monitor className="w-4 h-4 text-muted-foreground" />

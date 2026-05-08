@@ -9,6 +9,7 @@ import {
   Loader2, Save, Eye, EyeOff, Plus, Trash2, Edit2, 
   Link as LinkIcon, X, Image as ImageIcon, GripVertical, Palette, Check
 } from "lucide-react";
+import { ImageUploader } from "@/components/ImageUploader";
 import { motion } from 'framer-motion';
 import ProjectCard from '@/components/ProjectCard';
 
@@ -568,15 +569,15 @@ export default function ProjectsSettings() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-bold">Gestão de Projetos</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-xl md:text-3xl font-bold">Gestão de Projetos</h1>
+          <p className="text-muted-foreground mt-1 text-sm hidden sm:block">
             Adicione e edite os projetos do portfólio e personalize a página
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           <Button
             onClick={() => setShowPreview(!showPreview)}
             variant="outline"
@@ -592,7 +593,7 @@ export default function ProjectsSettings() {
         </div>
       </div>
 
-      <div className={`grid ${showPreview ? 'grid-cols-2' : 'grid-cols-1'} gap-6 min-h-[600px]`}>
+      <div className={`flex flex-col ${showPreview ? 'lg:grid lg:grid-cols-2' : ''} gap-6 min-h-[500px]`}>
         <div className="flex flex-col">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
@@ -614,14 +615,14 @@ export default function ProjectsSettings() {
                   </div>
 
                   <div className="space-y-4">
-                    <div>
+                    <div className="space-y-1">
                       <label className="text-sm font-medium">
                         <ImageIcon className="inline h-4 w-4 mr-2" />
-                        URL da Imagem *
+                        Imagem do Projeto *
                       </label>
-                      <Input
+                      <ImageUploader
                         value={newProject.imageUrl}
-                        onChange={(e) => setNewProject({ ...newProject, imageUrl: e.target.value })}
+                        onChange={url => setNewProject({ ...newProject, imageUrl: url })}
                         placeholder="https://exemplo.com/imagem.jpg"
                       />
                     </div>
@@ -638,7 +639,7 @@ export default function ProjectsSettings() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium">Título (PT) *</label>
                         <Input
@@ -657,7 +658,7 @@ export default function ProjectsSettings() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium">Descrição (PT) *</label>
                         <Textarea
@@ -1018,7 +1019,7 @@ export default function ProjectsSettings() {
 
         {/* Right: Preview */}
         {showPreview && (
-          <div className="flex flex-col h-full bg-gray-100">
+          <div className="flex flex-col min-h-[400px] lg:h-full bg-gray-100 border-t lg:border-t-0">
             <div className="flex items-center justify-between px-4 py-2 bg-white border-b">
               <span className="text-sm font-medium text-gray-600">Pré-visualização</span>
               <div className="flex gap-1">

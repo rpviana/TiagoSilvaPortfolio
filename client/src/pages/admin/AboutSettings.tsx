@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Save, Eye, EyeOff, Monitor, Download, FileText } from "lucide-react";
+import { ImageUploader } from "@/components/ImageUploader";
 
 type SiteContent = {
   key: string;
@@ -294,16 +295,16 @@ export default function AdminAboutSettings() {
   const fileFields = DEFAULT_FIELDS.filter(f => f.type === "file");
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-120px)]">
+    <div className="flex flex-col lg:flex-row gap-6 lg:h-[calc(100vh-120px)]">
       {/* Left Panel - Editor */}
-      <div className={`${showPreview ? 'w-1/2' : 'w-full'} overflow-auto transition-all duration-300`}>
+      <div className={`${showPreview ? 'lg:w-1/2' : ''} w-full overflow-auto transition-all duration-300`}>
         <div className="space-y-6 pr-4">
-          <div className="flex justify-between items-center sticky top-0 bg-gray-50 dark:bg-zinc-950 py-4 z-10">
-            <div>
-              <h1 className="text-2xl font-playfair font-bold">Editar Página Sobre</h1>
-              <p className="text-sm text-muted-foreground">Personalize a página de biografia.</p>
+          <div className="flex flex-wrap justify-between items-center sticky top-0 bg-gray-50 dark:bg-zinc-950 py-4 z-10 gap-2">
+            <div className="min-w-0">
+              <h1 className="text-xl md:text-2xl font-playfair font-bold">Editar Página Sobre</h1>
+              <p className="text-sm text-muted-foreground hidden sm:block">Personalize a página de biografia.</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 shrink-0">
               <Button 
                 variant="outline" 
                 size="sm"
@@ -337,7 +338,7 @@ export default function AdminAboutSettings() {
                       {field.label}
                     </AccordionTrigger>
                     <AccordionContent className="px-3 pb-3">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label className="text-xs font-semibold flex items-center gap-2">
                             <span className="w-5 h-3 bg-red-600 inline-block overflow-hidden relative rounded-sm">
@@ -396,22 +397,14 @@ export default function AdminAboutSettings() {
               {imageFields.map(field => (
                 <div key={field.key} className="bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-lg p-4">
                   <h3 className="font-semibold text-base mb-3">{field.label}</h3>
-                  <div className="space-y-3">
-                    <Input 
-                      value={content[field.key]?.valuePt || ""}
-                      onChange={e => {
-                        handleChange(field.key, "Pt", e.target.value);
-                        handleChange(field.key, "En", e.target.value);
-                      }}
-                      className="text-sm"
-                      placeholder="/attached_assets/..."
-                    />
-                    {content[field.key]?.valuePt && (
-                      <div className="relative aspect-[3/4] max-w-xs rounded-md overflow-hidden bg-gray-100">
-                        <img src={content[field.key]?.valuePt} alt="Preview" className="object-cover w-full h-full" />
-                      </div>
-                    )}
-                  </div>
+                  <ImageUploader
+                    value={content[field.key]?.valuePt || ""}
+                    onChange={url => {
+                      handleChange(field.key, "Pt", url);
+                      handleChange(field.key, "En", url);
+                    }}
+                    placeholder="/attached_assets/..."
+                  />
                 </div>
               ))}
             </TabsContent>
@@ -458,7 +451,7 @@ export default function AdminAboutSettings() {
                 </p>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Portuguese Documents */}
                 <div className="space-y-4">
                   <h3 className="font-semibold text-base flex items-center gap-2">
@@ -524,7 +517,7 @@ export default function AdminAboutSettings() {
 
       {/* Right Panel - Live Preview */}
       {showPreview && (
-        <div className="w-1/2 flex flex-col border-l border-gray-200 dark:border-zinc-800">
+        <div className="w-full lg:w-1/2 flex flex-col border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-zinc-800 min-h-[400px] lg:min-h-0">
           <div className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800">
             <div className="flex items-center gap-2">
               <Monitor className="w-4 h-4 text-muted-foreground" />

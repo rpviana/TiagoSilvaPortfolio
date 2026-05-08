@@ -5,11 +5,42 @@ import { authenticateToken, requireAdmin, loginUser, AuthRequest } from "./auth"
 import { insertMessageSchema, insertLanguageSchema, insertEventTranslationSchema, insertDiscographyReviewSchema, loginSchema, insertSiteContentSchema } from "@shared/schema";
 import nodemailer from 'nodemailer';
 import path from 'path';
+import fs from 'fs';
 import express from 'express';
+import multer from 'multer';
+
+// Multer config: save to attached_assets/, preserve extension
+const uploadStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    const dir = path.resolve(import.meta.dirname, '..', 'attached_assets');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `upload_${Date.now()}${ext}`);
+  },
+});
+const upload = multer({
+  storage: uploadStorage,
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  },
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Serve static assets from attached_assets directory
   app.use('/attached_assets', express.static(path.resolve(import.meta.dirname, '..', 'attached_assets')));
+
+  // Image Upload Route
+  app.post('/api/upload', authenticateToken, requireAdmin, upload.single('image'), (req: Request, res: Response) => {
+    const multerReq = req as Request & { file?: Express.Multer.File };
+    if (!multerReq.file) return res.status(400).json({ error: 'No file uploaded' });
+    const url = `/attached_assets/${multerReq.file.filename}`;
+    res.json({ url });
+  });
   
   // Authentication routes
   app.post('/api/auth/login', async (req: Request, res: Response) => {

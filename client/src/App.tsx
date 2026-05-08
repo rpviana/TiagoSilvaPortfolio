@@ -16,12 +16,13 @@ import Contact from "./pages/Contact";
 import AdminLayout from "./components/AdminLayout";
 import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
-import AdminHomeSettings from "./pages/admin/HomeSettings";
 import AdminHeaderSettings from "./pages/admin/HeaderSettings";
 import AdminFooterSettings from "./pages/admin/FooterSettings";
 import AdminAboutSettings from "./pages/admin/AboutSettings";
 import AdminEventsSettings from "./pages/admin/EventsSettings";
 import AdminProjectsSettings from "./pages/admin/ProjectsSettings";
+import AdminGallerySettings from "./pages/admin/GallerySettings";
+import AdminContactSettings from "./pages/admin/ContactSettings";
 
 // import AdminPanel from "./pages/AdminPanel";
 import { AnimatePresence } from "framer-motion";
@@ -43,11 +44,6 @@ function Router() {
         <Route path="/admin" component={() => (
           <AdminLayout>
             <AdminDashboard />
-          </AdminLayout>
-        )} />
-        <Route path="/admin/home" component={() => (
-          <AdminLayout>
-            <AdminHomeSettings />
           </AdminLayout>
         )} />
         <Route path="/admin/header" component={() => (
@@ -73,6 +69,16 @@ function Router() {
         <Route path="/admin/projects" component={() => (
           <AdminLayout>
             <AdminProjectsSettings />
+          </AdminLayout>
+        )} />
+        <Route path="/admin/gallery" component={() => (
+          <AdminLayout>
+            <AdminGallerySettings />
+          </AdminLayout>
+        )} />
+        <Route path="/admin/contact" component={() => (
+          <AdminLayout>
+            <AdminContactSettings />
           </AdminLayout>
         )} />
         <Route component={NotFound} />

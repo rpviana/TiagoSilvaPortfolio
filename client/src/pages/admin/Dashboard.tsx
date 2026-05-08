@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 export default function AdminDashboard() {
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-playfair font-bold text-foreground">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-8">
+        <h1 className="text-2xl md:text-3xl font-playfair font-bold text-foreground">
           Painel de Controlo
         </h1>
-        <Button variant="outline">
+        <Button variant="outline" className="w-full sm:w-auto">
           Criar Novo Item
         </Button>
       </div>

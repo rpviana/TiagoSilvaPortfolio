@@ -9,13 +9,25 @@ const SERVICE_ID = 'service_myktmp4';
 const TEMPLATE_ID = 'template_wc0393i';
 const PUBLIC_KEY = 'QqKVHtDTlzVHL0N1Z';
 
-const ContactForm = () => {
+type SiteContent = { key: string; valuePt: string; valueEn: string; type: string };
+
+interface ContactFormProps {
+  content?: Record<string, SiteContent>;
+  isPt?: boolean;
+  titleColor?: string;
+}
+
+const ContactForm = ({ content, isPt = true, titleColor = '#6B2D3A' }: ContactFormProps = {}) => {
   const form = useRef<HTMLFormElement>(null);
   const { t } = useTranslation();
   const { toast } = useToast();
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [phone, setPhone] = useState('');
   const [subject, setSubject] = useState('');
+
+  // Helper: use siteContent value if available, else i18n fallback
+  const label = (key: string, i18nKey: string) =>
+    (content?.[key] ? (isPt ? content[key].valuePt : content[key].valueEn) : null) || t(i18nKey);
 
   const sendEmail = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -60,7 +72,7 @@ const ContactForm = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="from_name" className="block text-sm font-medium text-gray-700 mb-2">
-            {t('contact.form.name')}
+            {label('contact_form_name_label', 'contact.form.name')}
           </label>
           <input
             type="text"
@@ -72,7 +84,7 @@ const ContactForm = () => {
         </div>
         <div>
           <label htmlFor="from_email" className="block text-sm font-medium text-gray-700 mb-2">
-            {t('contact.form.email')}
+            {label('contact_form_email_label', 'contact.form.email')}
           </label>
           <input
             type="email"
@@ -100,7 +112,7 @@ const ContactForm = () => {
 
       <div>
         <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-          Subject
+          {label('contact_form_subject_label', 'contact.form.subject') || 'Subject'}
         </label>
         <input
           type="text"
@@ -115,7 +127,7 @@ const ContactForm = () => {
 
       <div>
         <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-          {t('contact.form.message')}
+          {label('contact_form_message_label', 'contact.form.message')}
         </label>
         <textarea
           name="message"
@@ -128,7 +140,8 @@ const ContactForm = () => {
 
       <button
         type="submit"
-        className="w-full bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-md transition-colors flex items-center justify-center mt-2"
+        className="w-full text-white px-6 py-3 rounded-md transition-colors flex items-center justify-center mt-2 hover:opacity-90"
+        style={{ backgroundColor: titleColor }}
         disabled={status === 'sending'}
       >
         {status === 'sending' ? (
