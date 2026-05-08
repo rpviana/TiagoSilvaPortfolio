@@ -10,10 +10,15 @@ import {
   RepertoireTranslation, InsertRepertoireTranslation,
   DiscographyReview, InsertDiscographyReview,
   DiscographyReviewTranslation, InsertDiscographyReviewTranslation,
+  SiteContent, InsertSiteContent,
+  Project, InsertProject,
+  ProjectTranslation, InsertProjectTranslation,
+  ProjectLink, InsertProjectLink,
   users, messages, events, repertoire,
   languages, eventTranslations, 
   repertoireCategories, repertoireCategoryTranslations, 
-  repertoireTranslations, discography, discographyReviews, discographyReviewTranslations
+  repertoireTranslations, discography, discographyReviews, discographyReviewTranslations, siteContent,
+  projects, projectTranslations, projectLinks
 } from "@shared/schema";
 
 import { db } from "./db";
@@ -22,6 +27,11 @@ import { eq, and, or, desc, sql, asc, isNull } from "drizzle-orm";
 // Tipos estendidos com traduções
 export interface EventWithTranslations extends Event {
   translations: EventTranslation[];
+}
+
+export interface ProjectWithTranslations extends Project {
+  translations: ProjectTranslation[];
+  links: ProjectLink[];
 }
 
 export interface RepertoireCategoryWithTranslations extends RepertoireCategory {
@@ -37,7 +47,7 @@ export interface RepertoireWithTranslations extends Repertoire {
 export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<InsertUser>): Promise<User>;
   
@@ -54,6 +64,15 @@ export interface IStorage {
   getEvents(isPast?: boolean, languageCode?: string): Promise<EventWithTranslations[]>;
   getEvent(id: number, languageCode?: string): Promise<EventWithTranslations | undefined>;
   createEvent(event: InsertEvent, translations: InsertEventTranslation[]): Promise<EventWithTranslations>;
+  updateEvent(id: number, event: Partial<InsertEvent>, translations?: InsertEventTranslation[]): Promise<EventWithTranslations | undefined>;
+  deleteEvent(id: number): Promise<boolean>;
+  
+  // Project methods
+  getProjects(languageCode?: string): Promise<ProjectWithTranslations[]>;
+  getProject(id: number, languageCode?: string): Promise<ProjectWithTranslations | undefined>;
+  createProject(project: InsertProject, translations: InsertProjectTranslation[], links: InsertProjectLink[]): Promise<ProjectWithTranslations>;
+  updateProject(id: number, project: Partial<InsertProject>, translations?: InsertProjectTranslation[], links?: InsertProjectLink[]): Promise<ProjectWithTranslations | undefined>;
+  deleteProject(id: number): Promise<boolean>;
   
   // Repertoire category methods
   getRepertoireCategories(languageCode?: string): Promise<RepertoireCategoryWithTranslations[]>;
@@ -64,6 +83,11 @@ export interface IStorage {
   getRepertoire(categoryId?: number, languageCode?: string): Promise<RepertoireWithTranslations[]>;
   getRepertoireItem(id: number, languageCode?: string): Promise<RepertoireWithTranslations | undefined>;
   createRepertoire(item: InsertRepertoire, translations: InsertRepertoireTranslation[]): Promise<RepertoireWithTranslations>;
+  
+  // Site Content methods
+  getAllSiteContent(): Promise<SiteContent[]>;
+  getSiteContent(key: string): Promise<SiteContent | undefined>;
+  upsertSiteContent(content: InsertSiteContent): Promise<SiteContent>;
 }
 
 // Implementação do armazenamento usando banco de dados
@@ -74,8 +98,8 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user || undefined;
   }
 
@@ -221,6 +245,241 @@ export class DatabaseStorage implements IStorage {
       ...newEvent,
       translations: insertedTranslations
     };
+  }
+  
+  async updateEvent(id: number, eventData: Partial<InsertEvent>, translations?: InsertEventTranslation[]): Promise<EventWithTranslations | undefined> {
+    // Verificar se o evento existe
+    const [existingEvent] = await db.select().from(events).where(eq(events.id, id));
+    if (!existingEvent) {
+      return undefined;
+    }
+    
+    // Atualizar o evento
+    const [updatedEvent] = await db
+      .update(events)
+      .set(eventData)
+      .where(eq(events.id, id))
+      .returning();
+    
+    // Se houver traduções, atualizar ou inserir
+    if (translations && translations.length > 0) {
+      for (const translation of translations) {
+        // Verificar se já existe tradução para esse idioma
+        const [existingTranslation] = await db
+          .select()
+          .from(eventTranslations)
+          .where(and(
+            eq(eventTranslations.eventId, id),
+            eq(eventTranslations.languageCode, translation.languageCode)
+          ));
+        
+        if (existingTranslation) {
+          // Atualizar tradução existente
+          await db
+            .update(eventTranslations)
+            .set({ title: translation.title, description: translation.description })
+            .where(eq(eventTranslations.id, existingTranslation.id));
+        } else {
+          // Inserir nova tradução
+          await db
+            .insert(eventTranslations)
+            .values({ ...translation, eventId: id });
+        }
+      }
+    }
+    
+    // Retornar evento atualizado com traduções
+    return this.getEvent(id);
+  }
+  
+  async deleteEvent(id: number): Promise<boolean> {
+    // As traduções são eliminadas automaticamente devido ao onDelete: "cascade"
+    const result = await db.delete(events).where(eq(events.id, id)).returning();
+    return result.length > 0;
+  }
+  
+  // Project methods
+  async getProjects(languageCode?: string): Promise<ProjectWithTranslations[]> {
+    const projectsData = await db.select().from(projects).orderBy(asc(projects.order));
+    return await this.addTranslationsAndLinksToProjects(projectsData, languageCode);
+  }
+  
+  async getProject(id: number, languageCode?: string): Promise<ProjectWithTranslations | undefined> {
+    const [project] = await db.select().from(projects).where(eq(projects.id, id));
+    
+    if (!project) {
+      return undefined;
+    }
+    
+    const projectsWithData = await this.addTranslationsAndLinksToProjects([project], languageCode);
+    return projectsWithData[0];
+  }
+  
+  private async addTranslationsAndLinksToProjects(projects: Project[], languageCode?: string): Promise<ProjectWithTranslations[]> {
+    if (projects.length === 0) {
+      return [];
+    }
+    
+    // Buscar traduções
+    let translations;
+    if (languageCode) {
+      translations = await Promise.all(
+        projects.map(project => 
+          db.select()
+            .from(projectTranslations)
+            .where(and(
+              eq(projectTranslations.projectId, project.id),
+              eq(projectTranslations.languageCode, languageCode)
+            ))
+        )
+      ).then(results => results.flat());
+    } else {
+      translations = await Promise.all(
+        projects.map(project => 
+          db.select()
+            .from(projectTranslations)
+            .where(eq(projectTranslations.projectId, project.id))
+        )
+      ).then(results => results.flat());
+    }
+    
+    // Buscar links
+    const links = await Promise.all(
+      projects.map(project => 
+        db.select()
+          .from(projectLinks)
+          .where(eq(projectLinks.projectId, project.id))
+      )
+    ).then(results => results.flat());
+    
+    // Agrupar traduções por projectId
+    const translationsByProjectId = translations.reduce((acc, translation) => {
+      if (!acc[translation.projectId]) {
+        acc[translation.projectId] = [];
+      }
+      acc[translation.projectId].push(translation);
+      return acc;
+    }, {} as Record<number, ProjectTranslation[]>);
+    
+    // Agrupar links por projectId
+    const linksByProjectId = links.reduce((acc, link) => {
+      if (!acc[link.projectId]) {
+        acc[link.projectId] = [];
+      }
+      acc[link.projectId].push(link);
+      return acc;
+    }, {} as Record<number, ProjectLink[]>);
+    
+    // Adicionar traduções e links a cada projeto
+    return projects.map(project => {
+      return {
+        ...project,
+        translations: translationsByProjectId[project.id] || [],
+        links: linksByProjectId[project.id] || []
+      };
+    });
+  }
+  
+  async createProject(project: InsertProject, translations: InsertProjectTranslation[], links: InsertProjectLink[]): Promise<ProjectWithTranslations> {
+    // Insere o projeto
+    const [newProject] = await db
+      .insert(projects)
+      .values(project)
+      .returning();
+    
+    // Insere as traduções
+    const projectTranslationsToInsert = translations.map(translation => ({
+      ...translation,
+      projectId: newProject.id
+    }));
+    
+    const insertedTranslations = await db
+      .insert(projectTranslations)
+      .values(projectTranslationsToInsert)
+      .returning();
+    
+    // Insere os links
+    const projectLinksToInsert = links.map(link => ({
+      ...link,
+      projectId: newProject.id
+    }));
+    
+    const insertedLinks = projectLinksToInsert.length > 0
+      ? await db.insert(projectLinks).values(projectLinksToInsert).returning()
+      : [];
+    
+    // Retorna o projeto com suas traduções e links
+    return {
+      ...newProject,
+      translations: insertedTranslations,
+      links: insertedLinks
+    };
+  }
+  
+  async updateProject(id: number, projectData: Partial<InsertProject>, translations?: InsertProjectTranslation[], links?: InsertProjectLink[]): Promise<ProjectWithTranslations | undefined> {
+    // Verificar se o projeto existe
+    const [existingProject] = await db.select().from(projects).where(eq(projects.id, id));
+    if (!existingProject) {
+      return undefined;
+    }
+    
+    // Atualizar o projeto
+    const [updatedProject] = await db
+      .update(projects)
+      .set({ ...projectData, updatedAt: new Date() })
+      .where(eq(projects.id, id))
+      .returning();
+    
+    // Se houver traduções, atualizar ou inserir
+    if (translations && translations.length > 0) {
+      for (const translation of translations) {
+        // Verificar se já existe tradução para esse idioma
+        const [existingTranslation] = await db
+          .select()
+          .from(projectTranslations)
+          .where(and(
+            eq(projectTranslations.projectId, id),
+            eq(projectTranslations.languageCode, translation.languageCode)
+          ));
+        
+        if (existingTranslation) {
+          // Atualizar tradução existente
+          await db
+            .update(projectTranslations)
+            .set({ title: translation.title, description: translation.description })
+            .where(eq(projectTranslations.id, existingTranslation.id));
+        } else {
+          // Inserir nova tradução
+          await db
+            .insert(projectTranslations)
+            .values({ ...translation, projectId: id });
+        }
+      }
+    }
+    
+    // Se houver links, substituir todos
+    if (links !== undefined) {
+      // Eliminar links antigos
+      await db.delete(projectLinks).where(eq(projectLinks.projectId, id));
+      
+      // Inserir novos links
+      if (links.length > 0) {
+        const projectLinksToInsert = links.map(link => ({
+          ...link,
+          projectId: id
+        }));
+        await db.insert(projectLinks).values(projectLinksToInsert);
+      }
+    }
+    
+    // Retornar projeto atualizado com traduções e links
+    return this.getProject(id);
+  }
+  
+  async deleteProject(id: number): Promise<boolean> {
+    // As traduções e links são eliminados automaticamente devido ao onDelete: "cascade"
+    const result = await db.delete(projects).where(eq(projects.id, id)).returning();
+    return result.length > 0;
   }
   
   // Repertoire category methods
@@ -491,6 +750,37 @@ export class DatabaseStorage implements IStorage {
       .values(reviewData)
       .returning();
     return newReview;
+  }
+
+  // ===== SITE CONTENT METHODS =====
+
+  async getAllSiteContent(): Promise<SiteContent[]> {
+    return await db.select().from(siteContent);
+  }
+
+  async getSiteContent(key: string): Promise<SiteContent | undefined> {
+    const [content] = await db.select().from(siteContent).where(eq(siteContent.key, key));
+    return content || undefined;
+  }
+
+  async upsertSiteContent(content: InsertSiteContent): Promise<SiteContent> {
+    const existing = await this.getSiteContent(content.key);
+    
+    if (existing) {
+      const [updated] = await db.update(siteContent)
+        .set({
+          valuePt: content.valuePt,
+          valueEn: content.valueEn,
+          type: content.type,
+          updatedAt: new Date()
+        })
+        .where(eq(siteContent.key, content.key))
+        .returning();
+      return updated;
+    } else {
+      const [inserted] = await db.insert(siteContent).values(content).returning();
+      return inserted;
+    }
   }
 }
 

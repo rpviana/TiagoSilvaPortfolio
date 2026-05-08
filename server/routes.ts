@@ -2,20 +2,51 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { authenticateToken, requireAdmin, loginUser, AuthRequest } from "./auth";
-import { insertMessageSchema, insertLanguageSchema, insertEventTranslationSchema, insertDiscographyReviewSchema, loginSchema } from "@shared/schema";
+import { insertMessageSchema, insertLanguageSchema, insertEventTranslationSchema, insertDiscographyReviewSchema, loginSchema, insertSiteContentSchema } from "@shared/schema";
 import nodemailer from 'nodemailer';
 import path from 'path';
+import fs from 'fs';
 import express from 'express';
+import multer from 'multer';
+
+// Multer config: save to attached_assets/, preserve extension
+const uploadStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    const dir = path.resolve(import.meta.dirname, '..', 'attached_assets');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `upload_${Date.now()}${ext}`);
+  },
+});
+const upload = multer({
+  storage: uploadStorage,
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  },
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Serve static assets from attached_assets directory
   app.use('/attached_assets', express.static(path.resolve(import.meta.dirname, '..', 'attached_assets')));
+
+  // Image Upload Route
+  app.post('/api/upload', authenticateToken, requireAdmin, upload.single('image'), (req: Request, res: Response) => {
+    const multerReq = req as Request & { file?: Express.Multer.File };
+    if (!multerReq.file) return res.status(400).json({ error: 'No file uploaded' });
+    const url = `/attached_assets/${multerReq.file.filename}`;
+    res.json({ url });
+  });
   
   // Authentication routes
   app.post('/api/auth/login', async (req: Request, res: Response) => {
     try {
-      const { username, password } = loginSchema.parse(req.body);
-      const result = await loginUser(username, password);
+      const { email, password } = loginSchema.parse(req.body);
+      const result = await loginUser(email, password);
       res.json(result);
     } catch (error: any) {
       console.error('Login error:', error);
@@ -31,7 +62,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({
         id: user.id,
-        username: user.username,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -53,6 +83,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching languages:', error);
       res.status(500).json({ message: 'Failed to fetch languages' });
+    }
+  });
+
+  // Site Content Routes
+  app.get('/api/site-content', async (req: Request, res: Response) => {
+    try {
+      const content = await storage.getAllSiteContent();
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.json(content);
+    } catch (error) {
+      console.error('Error fetching site content:', error);
+      res.status(500).json({ message: 'Failed to fetch site content' });
+    }
+  });
+
+  app.post('/api/site-content', authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      if (Array.isArray(req.body)) {
+        const results = await Promise.all(
+          req.body.map((item: any) => {
+            const contentData = insertSiteContentSchema.parse(item);
+            return storage.upsertSiteContent(contentData);
+          })
+        );
+        return res.json(results);
+      }
+      
+      const contentData = insertSiteContentSchema.parse(req.body);
+      const result = await storage.upsertSiteContent(contentData);
+      res.json(result);
+    } catch (error: any) {
+      console.log('Error updating site content data:', JSON.stringify(error));
+      res.status(400).json({ message: 'Invalid site content data', error: error?.message || 'Unknown error' });
     }
   });
 
@@ -118,6 +183,174 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching event:', error);
       res.status(500).json({ message: 'Failed to fetch event' });
+    }
+  });
+  
+  // Admin: Create event
+  app.post('/api/events', authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { event, translations } = req.body;
+      
+      if (!event || !translations || !Array.isArray(translations)) {
+        return res.status(400).json({ message: 'Event and translations are required' });
+      }
+      
+      // Converter a string ISO para objeto Date
+      const eventWithDate = {
+        ...event,
+        date: new Date(event.date)
+      };
+      
+      const newEvent = await storage.createEvent(eventWithDate, translations);
+      res.status(201).json(newEvent);
+    } catch (error: any) {
+      console.error('Error creating event:', error);
+      res.status(400).json({ message: 'Failed to create event', error: error?.message });
+    }
+  });
+  
+  // Admin: Update event
+  app.put('/api/events/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid event ID' });
+      }
+      
+      const { event, translations } = req.body;
+      
+      // Converter a string ISO para objeto Date se existir
+      const eventWithDate = event && event.date ? {
+        ...event,
+        date: new Date(event.date)
+      } : event;
+      
+      const updatedEvent = await storage.updateEvent(id, eventWithDate, translations);
+      
+      if (!updatedEvent) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+      
+      res.json(updatedEvent);
+    } catch (error: any) {
+      console.error('Error updating event:', error);
+      res.status(400).json({ message: 'Failed to update event', error: error?.message });
+    }
+  });
+  
+  // Admin: Delete event
+  app.delete('/api/events/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid event ID' });
+      }
+      
+      const deleted = await storage.deleteEvent(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+      
+      res.json({ message: 'Event deleted successfully' });
+    } catch (error: any) {
+      console.error('Error deleting event:', error);
+      res.status(500).json({ message: 'Failed to delete event', error: error?.message });
+    }
+  });
+  
+  // Project routes
+  app.get('/api/projects', async (req: Request, res: Response) => {
+    try {
+      const languageCode = req.query.lang as string | undefined;
+      const projects = await storage.getProjects(languageCode);
+      res.json(projects);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      res.status(500).json({ message: 'Failed to fetch projects' });
+    }
+  });
+  
+  app.get('/api/projects/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const languageCode = req.query.lang as string | undefined;
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid project ID' });
+      }
+      
+      const project = await storage.getProject(id, languageCode);
+      
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      res.json(project);
+    } catch (error) {
+      console.error('Error fetching project:', error);
+      res.status(500).json({ message: 'Failed to fetch project' });
+    }
+  });
+  
+  // Admin: Create project
+  app.post('/api/projects', authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { project, translations, links } = req.body;
+      
+      if (!project || !translations || !Array.isArray(translations)) {
+        return res.status(400).json({ message: 'Project and translations are required' });
+      }
+      
+      const linksArray = Array.isArray(links) ? links : [];
+      const newProject = await storage.createProject(project, translations, linksArray);
+      res.status(201).json(newProject);
+    } catch (error: any) {
+      console.error('Error creating project:', error);
+      res.status(400).json({ message: 'Failed to create project', error: error?.message });
+    }
+  });
+  
+  // Admin: Update project
+  app.put('/api/projects/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid project ID' });
+      }
+      
+      const { project, translations, links } = req.body;
+      const updatedProject = await storage.updateProject(id, project, translations, links);
+      
+      if (!updatedProject) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      res.json(updatedProject);
+    } catch (error: any) {
+      console.error('Error updating project:', error);
+      res.status(400).json({ message: 'Failed to update project', error: error?.message });
+    }
+  });
+  
+  // Admin: Delete project
+  app.delete('/api/projects/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid project ID' });
+      }
+      
+      const deleted = await storage.deleteProject(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      res.json({ message: 'Project deleted successfully' });
+    } catch (error: any) {
+      console.error('Error deleting project:', error);
+      res.status(500).json({ message: 'Failed to delete project', error: error?.message });
     }
   });
   

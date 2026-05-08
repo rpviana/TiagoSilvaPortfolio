@@ -18,10 +18,18 @@ const Layout = ({ children }: LayoutProps) => {
   
   const [location] = useLocation();
   
+  // Check if we're on an admin route
+  const isAdminRoute = location.startsWith('/admin');
+  
   // Scroll to top when location changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location]);
+  
+  // Don't render header/footer for admin routes
+  if (isAdminRoute) {
+    return <>{children}</>;
+  }
   
   return (
     <div className="min-h-screen flex flex-col">

@@ -1,26 +1,11 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/components/LanguageContext';
 
 export type Language = 'en' | 'pt';
 
 export const useLanguageManager = () => {
-  const { i18n } = useTranslation();
+  const { language, setLanguage } = useLanguage();
   
-  const [language, setLanguageState] = useState<Language>(() => {
-    const savedLanguage = localStorage.getItem('language') as Language;
-    return savedLanguage || 'en';
-  });
+  const isPt = language === 'pt';
 
-  // Initialize i18n with the current language
-  useEffect(() => {
-    i18n.changeLanguage(language);
-  }, [i18n, language]);
-
-  const setLanguage = (lang: Language) => {
-    localStorage.setItem('language', lang);
-    setLanguageState(lang);
-    i18n.changeLanguage(lang);
-  };
-
-  return { language, setLanguage };
+  return { language, setLanguage, isPt };
 };

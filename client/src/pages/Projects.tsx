@@ -1,53 +1,94 @@
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import ProjectCard from '../components/ProjectCard';
+import { Loader2 } from 'lucide-react';
+
+interface ProjectTranslation {
+  languageCode: string;
+  title: string;
+  description: string;
+}
+
+interface ProjectLink {
+  type: string;
+  url: string;
+}
+
+interface Project {
+  id: number;
+  imageUrl: string;
+  order: number;
+  translations: ProjectTranslation[];
+  links: ProjectLink[];
+}
+
+interface SiteContent {
+  key: string;
+  valuePt: string;
+  valueEn: string;
+}
 
 const Projects = () => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
+  const currentLang = i18n.language === 'pt' || i18n.language?.toLowerCase().startsWith('pt') ? 'pt' : 'en';
 
-  // Project data
-  const projects = [
-    {
-      title: "97 Ensemble",
-      description: t('projects.97ensemble.description'),
-      imageUrl: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
-      links: [
-        { type: "website" as const, url: "https://97ensemble.com/" },
-        { type: "instagram" as const, url: "https://www.instagram.com/97ensemble/" }
-      ]
+  // Fetch projects from API
+  const { data: projects = [], isLoading } = useQuery<Project[]>({
+    queryKey: ['/api/projects', currentLang],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects?lang=${currentLang}`);
+      if (!response.ok) throw new Error('Failed to fetch projects');
+      return response.json();
     },
-    {
-      title: "Constelação 15",
-      description: t('projects.constelacao15.description'),
-      imageUrl: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
-      links: [
-        { type: "website" as const, url: "https://www.constellation15.co.uk/" }
-      ]
-    },
-    {
-      title: "FAMART",
-      description: t('projects.famart.description'),
-      imageUrl: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1471&q=80",
-      links: [
-        { type: "instagram" as const, url: "https://www.instagram.com/famart.plataforma/" },
-        { type: "facebook" as const, url: "https://www.facebook.com/share/19B77iPAWk/" }
-      ]
-    }
-  ];
+  });
 
-  // Lógica para o ficheiro de repertório
-  const isPt = i18n.language === 'pt' || i18n.language?.toLowerCase().startsWith('pt');
-  const repertoireFile = isPt
-    ? '/RepertoireList_pt.pdf'
-    : '/RepertoireList_en.pdf';
-  const repertoireTitle = t('projects.repertoire') || (isPt ? "Repertório" : "Repertoire");
-  const repertoireLabel = isPt
-    ? "Baixar Repertório (PDF)"
-    : "Download Repertoire (PDF)";
+  // Fetch site content for customization
+  const { data: siteContent = [] } = useQuery<SiteContent[]>({
+    queryKey: ['/api/site-content'],
+    queryFn: async () => {
+      const response = await fetch('/api/site-content', {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    staleTime: 0, // Sempre buscar dados frescos
+    cacheTime: 0, // Não cachear
+  });
+
+  const getContent = (key: string, fallback: string = '') => {
+    if (!Array.isArray(siteContent)) return fallback;
+    const content = siteContent.find(item => item.key === key);
+    return currentLang === 'pt' ? (content?.valuePt || fallback) : (content?.valueEn || fallback);
+  };
+
+  const pageTitle = getContent('projects_title', 'Projetos e Conjuntos');
+  const pageDescription = getContent('projects_description', 'Descubra os vários projetos artísticos e conjuntos nos quais Tiago está envolvido.');
+  const bgColor = getContent('projects_bg_color', '#ffffff');
+  const titleColor = getContent('projects_title_color', '#6B2D3A');
+  
+  const collaborativeTitle = getContent('projects_collaborative_title', 'Trabalho Colaborativo');
+  const collaborativeText1 = getContent('projects_collaborative_text1');
+  const collaborativeText2 = getContent('projects_collaborative_text2');
+  const pastCollabTitle = getContent('projects_past_collaborations_title', 'Colaborações Passadas');
+  const collaboration1 = getContent('projects_collaboration1');
+  const collaboration2 = getContent('projects_collaboration2');
+  const collaboration3 = getContent('projects_collaboration3');
+  const collaboration4 = getContent('projects_collaboration4');
+  
+  const repertoireTitle = getContent('projects_repertoire_title', 'Repertório');
+  const repertoireButton = getContent('projects_repertoire_button', 'Baixar Repertório (PDF)');
+  const repertoireFile = currentLang === 'pt' 
+    ? getContent('projects_repertoire_file_pt', '/RepertoireList_pt.pdf')
+    : getContent('projects_repertoire_file_en', '/RepertoireList_en.pdf');
 
   return (
     <div className="pt-24">
-      <section className="py-16 md:py-24 bg-white">
+      <section className="py-16 md:py-24" style={{ backgroundColor: bgColor }}>
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <motion.div 
@@ -56,74 +97,105 @@ const Projects = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="text-4xl md:text-5xl font-playfair font-bold mb-4 text-primary">
-                {t('projects.title')}
+              <h1 className="text-4xl md:text-5xl font-playfair font-bold mb-4" style={{ color: titleColor }}>
+                {pageTitle}
               </h1>
               <p className="text-gray-600 max-w-2xl mx-auto">
-                {t('projects.description')}
+                {pageDescription}
               </p>
             </motion.div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {projects.map((project, index) => (
-                <motion.div 
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 + 0.2 }}
-                >
-                  <ProjectCard 
-                    title={project.title}
-                    description={project.description}
-                    imageUrl={project.imageUrl}
-                    links={project.links}
-                  />
-                </motion.div>
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {projects.map((project, index) => {
+                  const translation = project.translations.find(t => t.languageCode === currentLang) 
+                    || project.translations[0];
+                  
+                  if (!translation) return null;
+
+                  return (
+                    <motion.div 
+                      key={project.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 + 0.2 }}
+                    >
+                      <ProjectCard 
+                        title={translation.title}
+                        description={translation.description}
+                        imageUrl={project.imageUrl}
+                        links={project.links.map(link => ({ type: link.type as any, url: link.url }))}
+                      />
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
             
             {/* Collaborative Work */}
-            <motion.div 
-              className="mt-20"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-            >
-              <h2 className="text-3xl font-playfair font-bold mb-8 text-primary">
-                {t('projects.collaborativeWork')}
-              </h2>
-              
-              <div className="bg-gray-50 p-8 rounded-lg shadow-md">
-                <div className="prose prose-lg max-w-none">
-                  <p>{t('projects.collaborativeWorkText1')}</p>
-                  <p>{t('projects.collaborativeWorkText2')}</p>
-                  
-                  <h3 className="font-playfair text-primary mt-8 mb-4">
-                    {t('projects.pastCollaborations')}
-                  </h3>
-                  
-                  <ul className="list-disc pl-5 space-y-2">
-                    <li>{t('projects.collaboration1')}</li>
-                    <li>{t('projects.collaboration2')}</li>
-                    <li>{t('projects.collaboration3')}</li>
-                    <li>{t('projects.collaboration4')}</li>
-                  </ul>
+            {collaborativeText1 && (
+              <motion.div 
+                className="mt-20"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+              >
+                <h2 className="text-3xl font-playfair font-bold mb-8" style={{ color: titleColor }}>
+                  {collaborativeTitle}
+                </h2>
+                
+                <div className="bg-gray-50 p-8 rounded-lg shadow-md">
+                  <div className="prose prose-lg max-w-none">
+                    {collaborativeText1 && <p>{collaborativeText1}</p>}
+                    {collaborativeText2 && <p>{collaborativeText2}</p>}
+                    
+                    {(collaboration1 || collaboration2 || collaboration3 || collaboration4) && (
+                      <>
+                        <h3 className="font-playfair mt-8 mb-4" style={{ color: titleColor }}>
+                          {pastCollabTitle}
+                        </h3>
+                        
+                        <ul className="list-disc pl-5 space-y-2">
+                          {collaboration1 && <li>{collaboration1}</li>}
+                          {collaboration2 && <li>{collaboration2}</li>}
+                          {collaboration3 && <li>{collaboration3}</li>}
+                          {collaboration4 && <li>{collaboration4}</li>}
+                        </ul>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            )}
             
-            {/* Repertório Download - agora no fundo */}
+            {/* Repertório Download */}
             <div className="flex flex-col items-center mt-20">
-              <h2 className="text-2xl font-playfair font-semibold text-purple mb-4">
+              <h2 className="text-2xl font-playfair font-semibold mb-4" style={{ color: titleColor }}>
                 {repertoireTitle}
               </h2>
               <a
                 href={repertoireFile}
                 download
-                className="inline-flex items-center justify-center w-full bg-white border border-primary text-primary hover:bg-primary hover:text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg transition-colors duration-200"
+                className="inline-flex items-center justify-center w-full bg-white border px-8 py-4 rounded-full font-semibold text-lg shadow-lg transition-colors duration-200"
+                style={{ 
+                  borderColor: titleColor, 
+                  color: titleColor 
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = titleColor;
+                  e.currentTarget.style.color = '#ffffff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#ffffff';
+                  e.currentTarget.style.color = titleColor;
+                }}
               >
                 <i className="fas fa-download mr-2"></i>
-                {repertoireLabel}
+                {repertoireButton}
               </a>
             </div>
           </div>

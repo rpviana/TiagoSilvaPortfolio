@@ -1,52 +1,44 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+import { useLanguage } from './LanguageContext';
 import LanguageSwitcher from './LanguageSwitcher';
-// import AdminLogin from './AdminLogin';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Settings, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-// import { useAuth } from '@/hooks/useAuth';
+import { Menu, X } from 'lucide-react';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
   const { t } = useTranslation();
   const [location] = useLocation();
-  // Temporary hardcoded admin state for demo
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-  
-  const handleLogin = () => {
-    const username = prompt('Username:');
-    const password = prompt('Password:');
-    
-    if (username === 'TiagoSilva' && password === 'portfolio') {
-      setIsAuthenticated(true);
-      setUser({ username: 'TiagoSilva', firstName: 'Tiago', isAdmin: true });
-      localStorage.setItem('isLoggedIn', 'true');
-      alert('Login realizado com sucesso!');
-    } else {
-      alert('Credenciais inválidas');
-    }
+  const { language } = useLanguage();
+  const isPt = language === 'pt';
+
+  // Fetch dynamic content
+  const { data: content } = useQuery({
+    queryKey: ['/api/site-content'],
+    queryFn: async () => {
+      const res = await fetch('/api/site-content');
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      const map: Record<string, any> = {};
+      data.forEach((item: any) => { map[item.key] = item });
+      return map;
+    },
+    staleTime: 0,
+    refetchOnMount: "always"
+  });
+
+  const getText = (key: string, fallback: string) => {
+    if (!content || !content[key]) return fallback;
+    return isPt ? content[key].valuePt : content[key].valueEn;
   };
-  
-  const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    localStorage.removeItem('isLoggedIn');
-    alert('Logout realizado');
+
+  const getColor = (key: string, fallback: string) => {
+    if (!content || !content[key]) return fallback;
+    return content[key].valuePt || fallback;
   };
-  
-  // Check localStorage on component mount
-  useEffect(() => {
-    const loggedIn = localStorage.getItem('isLoggedIn');
-    if (loggedIn === 'true') {
-      setIsAuthenticated(true);
-      setUser({ username: 'TiagoSilva', firstName: 'Tiago', isAdmin: true });
-    }
-  }, []);
   
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
@@ -66,20 +58,31 @@ const Header = () => {
   }, []);
   
   const navLinks = [
-    { path: "/about", label: t("nav.about") },
-    { path: "/gallery", label: t("nav.gallery") },
-    { path: "/discography", label: t("nav.discography") },
-    { path: "/projects", label: t("nav.projects") },
-    { path: "/events", label: t("nav.events") },
-    { path: "/contact", label: t("nav.contact") },
+    { path: "/about", label: getText("header_nav_about", t("nav.about")) },
+    { path: "/gallery", label: getText("header_nav_gallery", t("nav.gallery")) },
+    { path: "/discography", label: getText("header_nav_discography", t("nav.discography")) },
+    { path: "/projects", label: getText("header_nav_projects", t("nav.projects")) },
+    { path: "/events", label: getText("header_nav_events", t("nav.events")) },
+    { path: "/contact", label: getText("header_nav_contact", t("nav.contact")) },
   ];
+
+  const bgColor = getColor("header_bg_color", "#ffffff");
+  const textColor = getColor("header_text_color", "#6B2D3A");
   
   return (
-    <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 shadow-sm' : 'bg-transparent'}`}>
+    <header 
+      className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'shadow-sm' : 'bg-transparent'}`}
+      style={{ backgroundColor: scrolled ? `${bgColor}f2` : 'transparent' }}
+    >
       <div className="container mx-auto px-4 py-2 md:py-4">
         <div className="flex justify-between items-center">
-          <Link href="/" onClick={closeMenu} className="text-xl md:text-2xl font-playfair font-bold text-primary transition-colors">
-            Tiago Soares Silva
+          <Link 
+            href="/" 
+            onClick={closeMenu} 
+            className="text-xl md:text-2xl font-playfair font-bold transition-colors"
+            style={{ color: textColor }}
+          >
+            {getText("header_logo_text", "Tiago Soares Silva")}
           </Link>
           
           <div className="hidden md:flex items-center space-x-8">
@@ -88,7 +91,8 @@ const Header = () => {
                 <Link 
                   key={link.path}
                   href={link.path} 
-                  className={`nav-link ${location === link.path ? 'text-primary' : 'text-foreground/80'}`}
+                  className="nav-link transition-colors"
+                  style={{ color: location === link.path ? textColor : `${textColor}cc` }}
                 >
                   {link.label}
                 </Link>
@@ -96,45 +100,13 @@ const Header = () => {
             </nav>
             
             <LanguageSwitcher />
-            
-            {/* Admin controls */}
-            {isAuthenticated && user?.isAdmin ? (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => window.location.href = '/admin'}
-                  className="text-foreground/80 hover:text-primary"
-                >
-                  <Settings size={16} className="mr-1" />
-                  Admin
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={logout}
-                  className="text-foreground/80 hover:text-red-600"
-                >
-                  <LogOut size={16} />
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogin}
-                className="text-foreground/80 hover:text-primary"
-              >
-                <Settings size={16} className="mr-1" />
-                Login
-              </Button>
-            )}
           </div>
           
           <button 
-            className="md:hidden text-foreground focus:outline-none" 
+            className="md:hidden focus:outline-none" 
             onClick={toggleMenu}
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            style={{ color: textColor }}
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -149,7 +121,8 @@ const Header = () => {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden bg-white shadow-md"
+            className="md:hidden shadow-md"
+            style={{ backgroundColor: bgColor }}
           >
             <div className="container mx-auto px-4 py-3">
               <nav className="flex flex-col space-y-3">
@@ -157,67 +130,20 @@ const Header = () => {
                   <Link 
                     key={link.path}
                     href={link.path} 
-                    className={`py-2 ${location === link.path ? 'text-primary' : 'text-foreground/80'}`}
+                    className="py-2"
+                    style={{ color: location === link.path ? textColor : `${textColor}cc` }}
                     onClick={closeMenu}
                   >
                     {link.label}
                   </Link>
                 ))}
                 
-                <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                <div className="flex items-center pt-2 border-t border-gray-200">
                   <LanguageSwitcher />
-                  
-                  {isAuthenticated && user?.isAdmin ? (
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          closeMenu();
-                          window.location.href = '/admin';
-                        }}
-                        className="text-primary"
-                      >
-                        <Settings size={16} className="mr-1" />
-                        Admin
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          closeMenu();
-                          logout();
-                        }}
-                        className="text-red-600"
-                      >
-                        <LogOut size={16} />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        closeMenu();
-                        handleLogin();
-                      }}
-                      className="text-primary"
-                    >
-                      <Settings size={16} className="mr-1" />
-                      Login
-                    </Button>
-                  )}
                 </div>
               </nav>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
-      
-      {/* Login Modal */}
-      <AnimatePresence>
-        {showLogin && (
-          <AdminLogin onClose={() => setShowLogin(false)} />
         )}
       </AnimatePresence>
     </header>

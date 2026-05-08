@@ -15,9 +15,8 @@ export const insertLanguageSchema = createInsertSchema(languages);
 // User schema with admin functionality
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  email: text("email"),
   firstName: text("first_name"),
   lastName: text("last_name"),
   isAdmin: boolean("is_admin").default(false),
@@ -26,9 +25,8 @@ export const users = pgTable("users", {
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
   email: true,
+  password: true,
   firstName: true,
   lastName: true,
   isAdmin: true,
@@ -36,7 +34,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 // Login schema
 export const loginSchema = z.object({
-  username: z.string().min(1, "Username é obrigatório"),
+  email: z.string().email("Email inválido"),
   password: z.string().min(1, "Password é obrigatória"),
 });
 
@@ -201,6 +199,19 @@ export const insertRepertoireTranslationSchema = createInsertSchema(repertoireTr
   title: true,
 });
 
+// Dynamic Site Content (Home page hero, texts, images, etc.)
+export const siteContent = pgTable("site_content", {
+  key: text("key").primaryKey(), // ex: 'home_hero_title', 'home_hero_image'
+  valuePt: text("value_pt").notNull(),
+  valueEn: text("value_en").notNull(),
+  type: text("type").notNull().default("text"), // 'text', 'textarea', 'image'
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertSiteContentSchema = createInsertSchema(siteContent);
+export type SiteContent = typeof siteContent.$inferSelect;
+export type InsertSiteContent = typeof siteContent.$inferInsert;
+
 // Relações para traduções de repertório
 export const repertoireTranslationsRelations = relations(repertoireTranslations, ({ one }) => ({
   repertoireItem: one(repertoire, {
@@ -336,3 +347,86 @@ export type DiscographyReview = typeof discographyReviews.$inferSelect;
 
 export type InsertDiscographyReviewTranslation = z.infer<typeof insertDiscographyReviewTranslationSchema>;
 export type DiscographyReviewTranslation = typeof discographyReviewTranslations.$inferSelect;
+
+// Projects schema
+export const projects = pgTable("projects", {
+  id: serial("id").primaryKey(),
+  imageUrl: text("image_url").notNull(),
+  order: integer("order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertProjectSchema = createInsertSchema(projects).pick({
+  imageUrl: true,
+  order: true,
+});
+
+// Relações para projetos
+export const projectsRelations = relations(projects, ({ many }) => ({
+  translations: many(projectTranslations),
+  links: many(projectLinks),
+}));
+
+// Traduções para projetos
+export const projectTranslations = pgTable("project_translations", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  languageCode: varchar("language_code", { length: 2 }).notNull().references(() => languages.code),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+}, (table) => {
+  return {
+    uniqueLangPerProject: unique().on(table.projectId, table.languageCode),
+  }
+});
+
+export const insertProjectTranslationSchema = createInsertSchema(projectTranslations).pick({
+  projectId: true,
+  languageCode: true,
+  title: true,
+  description: true,
+});
+
+// Relações para traduções de projetos
+export const projectTranslationsRelations = relations(projectTranslations, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectTranslations.projectId],
+    references: [projects.id]
+  }),
+  language: one(languages, {
+    fields: [projectTranslations.languageCode],
+    references: [languages.code]
+  })
+}));
+
+// Links de projetos (website, instagram, facebook)
+export const projectLinks = pgTable("project_links", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  type: varchar("type", { length: 20 }).notNull(), // website | instagram | facebook
+  url: text("url").notNull(),
+});
+
+export const insertProjectLinkSchema = createInsertSchema(projectLinks).pick({
+  projectId: true,
+  type: true,
+  url: true,
+});
+
+// Relações para links de projetos
+export const projectLinksRelations = relations(projectLinks, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectLinks.projectId],
+    references: [projects.id]
+  })
+}));
+
+export type InsertProject = z.infer<typeof insertProjectSchema>;
+export type Project = typeof projects.$inferSelect;
+
+export type InsertProjectTranslation = z.infer<typeof insertProjectTranslationSchema>;
+export type ProjectTranslation = typeof projectTranslations.$inferSelect;
+
+export type InsertProjectLink = z.infer<typeof insertProjectLinkSchema>;
+export type ProjectLink = typeof projectLinks.$inferSelect;
