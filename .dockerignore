@@ -1,0 +1,8 @@
+.git
+.github
+.env
+node_modules
+dist
+client/dist
+npm-debug.log*
+*.tar.gz
